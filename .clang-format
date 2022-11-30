@@ -1,0 +1,9 @@
+BasedOnStyle: Google
+AlignConsecutiveMacros: AcrossEmptyLines
+AlignAfterOpenBracket: BlockIndent
+BreakBeforeBraces: Attach
+ContinuationIndentWidth: 2
+ConstructorInitializerIndentWidth: 4
+PackConstructorInitializers: CurrentLine
+BreakConstructorInitializers: AfterColon
+LambdaBodyIndentation: OuterScope
