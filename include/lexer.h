@@ -7,9 +7,11 @@ typedef enum {
   TT_EOF,
   TT_UNKNOWN,
   TT_UNCLOSED_STR,
+  TT_UNCLOSED_CHAR,
 
   TT_INT,
   TT_STR,
+  TT_CHAR,
 
   TT_PLUS,
   TT_MINUS,
