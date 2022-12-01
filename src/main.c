@@ -10,7 +10,9 @@ int main(int argc, char **argv) {
   char *src = readFile(argv[1]);
 
   Lexer lexer = lexerNew(src);
-  tokenPrint(lexerNext(&lexer));
+  Token t = lexerNext(&lexer);
+  do tokenPrint(t);
+  while ((t = lexerNext(&lexer)) != TT_EOF);
 
   free(src);
   return 0;

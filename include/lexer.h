@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 typedef enum {
+  TT_EOF,
   TT_UNKNOWN,
 
   TT_INT,
@@ -16,9 +17,8 @@ typedef enum {
 void tokenPrint(Token t);
 
 typedef struct {
-  char *src;
-  size_t start;
-  size_t curr;
+  char *start;
+  char *curr;
 } Lexer;
 
 Lexer lexerNew(char *src);
