@@ -12,7 +12,7 @@ int main(int argc, char **argv) {
   Lexer lexer = lexerNew(src);
   Token t = lexerNext(&lexer);
   do tokenPrint(t);
-  while ((t = lexerNext(&lexer)) != TT_EOF);
+  while ((t = lexerNext(&lexer)).type != TT_EOF);
 
   free(src);
   return 0;

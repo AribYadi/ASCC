@@ -12,6 +12,12 @@ typedef enum {
   TT_MINUS,
   TT_STAR,
   TT_SLASH,
+} TokenType;
+
+typedef struct {
+  TokenType type;
+  char *lexeme;
+  int lexemeLen;
 } Token;
 
 void tokenPrint(Token t);
