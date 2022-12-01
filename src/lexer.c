@@ -18,6 +18,12 @@ void tokenPrint(Token t) {
     case TT_MINUS: printf("TT_MINUS"); break;
     case TT_STAR: printf("TT_STAR"); break;
     case TT_SLASH: printf("TT_SLASH"); break;
+    case TT_LPAREN: printf("TT_LPAREN"); break;
+    case TT_RPAREN: printf("TT_RPAREN"); break;
+    case TT_LBRACE: printf("TT_LBRACE"); break;
+    case TT_RBRACE: printf("TT_RBRACE"); break;
+    case TT_LSQUARE: printf("TT_LSQUARE"); break;
+    case TT_RSQUARE: printf("TT_RSQUARE"); break;
   }
   printf("', lexeme: '%.*s' }\n", t.lexemeLen, t.lexeme); 
 }
@@ -66,6 +72,12 @@ Token lexerNext(Lexer *lexer) {
   else if (!strncmp(lexer->start, "-", len)) t.type = TT_MINUS;
   else if (!strncmp(lexer->start, "*", len)) t.type = TT_STAR;
   else if (!strncmp(lexer->start, "/", len)) t.type = TT_SLASH;
+  else if (!strncmp(lexer->start, "(", len)) t.type = TT_LPAREN;
+  else if (!strncmp(lexer->start, ")", len)) t.type = TT_RPAREN;
+  else if (!strncmp(lexer->start, "{", len)) t.type = TT_LBRACE;
+  else if (!strncmp(lexer->start, "}", len)) t.type = TT_RBRACE;
+  else if (!strncmp(lexer->start, "[", len)) t.type = TT_LSQUARE;
+  else if (!strncmp(lexer->start, "]", len)) t.type = TT_RSQUARE;
   t.lexemeLen = lexer->curr - lexer->start;
 
   lexer->start = lexer->curr;

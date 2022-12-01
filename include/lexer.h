@@ -17,6 +17,12 @@ typedef enum {
   TT_MINUS,
   TT_STAR,
   TT_SLASH,
+  TT_LPAREN,
+  TT_RPAREN,
+  TT_LBRACE,
+  TT_RBRACE,
+  TT_LSQUARE,
+  TT_RSQUARE,
 } TokenType;
 
 typedef struct {
