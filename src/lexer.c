@@ -21,6 +21,11 @@ Lexer lexerNew(char *src) {
   return lexer;
 }
 
+Token lexInt(Lexer *lexer) {
+  while (lexer->curr[0] >= '0' && lexer->curr[0] <= '9') ++lexer->curr;
+  return TT_INT;
+}
+
 Token lexerNext(Lexer *lexer) {
   if (!*lexer->start) return TT_EOF;
 
@@ -31,7 +36,8 @@ Token lexerNext(Lexer *lexer) {
   subs[len] = '\0';
 
   Token t = TT_UNKNOWN;
-  if (!strcmp(subs, "+")) t = TT_PLUS;
+  if (subs[0] >= '0' && subs[0] <= '9') t = lexInt(lexer);
+  else if (!strcmp(subs, "+")) t = TT_PLUS;
   else if (!strcmp(subs, "-")) t = TT_MINUS;
   else if (!strcmp(subs, "*")) t = TT_STAR;
   else if (!strcmp(subs, "/")) t = TT_SLASH;
