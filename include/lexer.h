@@ -1,0 +1,27 @@
+#ifndef ASCC_LEXER_H
+#define ASCC_LEXER_H
+
+#include <stdint.h>
+
+typedef enum {
+  TT_UNKNOWN,
+
+  TT_INT,
+  TT_PLUS,
+  TT_MINUS,
+  TT_STAR,
+  TT_SLASH,
+} Token;
+
+void tokenPrint(Token t);
+
+typedef struct {
+  char *src;
+  size_t start;
+  size_t curr;
+} Lexer;
+
+Lexer lexerNew(char *src);
+Token lexerNext(Lexer *lexer);
+
+#endif
