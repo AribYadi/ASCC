@@ -47,9 +47,13 @@ void tokenPrint(Token t) {
     case TT_INT: printf("TT_INT"); break;
     case TT_CHAR: printf("TT_CHAR"); break;
     case TT_PLUS: printf("TT_PLUS"); break;
+    case TT_PLUS_EQ: printf("TT_PLUS_EQ"); break;
     case TT_MINUS: printf("TT_MINUS"); break;
+    case TT_MINUS_EQ: printf("TT_MINUS_EQ"); break;
     case TT_STAR: printf("TT_STAR"); break;
+    case TT_STAR_EQ: printf("TT_STAR_EQ"); break;
     case TT_SLASH: printf("TT_SLASH"); break;
+    case TT_SLASH_EQ: printf("TT_SLASH_EQ"); break;
     case TT_LESS: printf("TT_LESS"); break;
     case TT_LESS_EQ: printf("TT_LESS_EQ"); break;
     case TT_GREATER: printf("TT_GREATER"); break;
@@ -60,6 +64,17 @@ void tokenPrint(Token t) {
     case TT_BANG_EQ: printf("TT_BANG_EQ"); break;
     case TT_AMPER_AMPER: printf("TT_AMPER_AMPER"); break;
     case TT_PIPE_PIPE: printf("TT_PIPE_PIPE"); break;
+    case TT_TILDA: printf("TT_TILDA"); break;
+    case TT_CARAT: printf("TT_CARAT"); break;
+    case TT_CARAT_EQ: printf("TT_CARAT_EQ"); break;
+    case TT_PERCENT: printf("TT_PERCENT"); break;
+    case TT_PERCENT_EQ: printf("TT_PERCENT_EQ"); break;
+    case TT_LESS_LESS: printf("TT_LESS_LESS"); break;
+    case TT_LESS_LESS_EQ: printf("TT_LESS_LESS_EQ"); break;
+    case TT_GREATER_GREATER: printf("TT_GREATER_GREATER"); break;
+    case TT_GREATER_GREATER_EQ: printf("TT_GREATER_GREATER_EQ"); break;
+    case TT_AMPER_EQ: printf("TT_AMPER_EQ"); break;
+    case TT_PIPE_EQ: printf("TT_PIPE_EQ"); break;
     case TT_LPAREN: printf("TT_LPAREN"); break;
     case TT_RPAREN: printf("TT_RPAREN"); break;
     case TT_LBRACE: printf("TT_LBRACE"); break;
@@ -72,6 +87,9 @@ void tokenPrint(Token t) {
     case TT_COMMA: printf("TT_COMMA"); break;
     case TT_DOT: printf("TT_DOT"); break;
     case TT_ARROW: printf("TT_ARROW"); break;
+    case TT_ELLIPSIS: printf("TT_ELLIPSIS"); break;
+    case TT_PLUS_PLUS: printf("TT_PLUS_PLUS"); break;
+    case TT_MINUS_MINUS: printf("TT_MINUS_MINUS"); break;
   }
   printf("', lexeme: '%.*s' }\n", t.lexemeLen, t.lexeme); 
 }
@@ -157,13 +175,23 @@ Token lexerNext(Lexer *lexer) {
   else if (lexer->start[0] == '"') t.type = lexStr(lexer);
   else if (lexer->start[0] >= '0' && lexer->start[0] <= '9') t.type = lexInt(lexer);
   else if (lexer->start[0] == '\'') t.type = lexChar(lexer);
+  else if (!strncmp(lexer->start, "+=", len+1)) { ++lexer->curr; t.type = TT_PLUS_EQ; }
+  else if (!strncmp(lexer->start, "++", len+1)) { ++lexer->curr; t.type = TT_PLUS_PLUS; }
   else if (!strncmp(lexer->start, "+", len)) t.type = TT_PLUS;
+  else if (!strncmp(lexer->start, "-=", len+1)) { ++lexer->curr; t.type = TT_MINUS_EQ; }
+  else if (!strncmp(lexer->start, "--", len+1)) { ++lexer->curr; t.type = TT_MINUS_MINUS; }
   else if (!strncmp(lexer->start, "->", len+1)) { ++lexer->curr; t.type = TT_ARROW; }
   else if (!strncmp(lexer->start, "-", len)) t.type = TT_MINUS;
+  else if (!strncmp(lexer->start, "*=", len+1)) { ++lexer->curr; t.type = TT_STAR_EQ; }
   else if (!strncmp(lexer->start, "*", len)) t.type = TT_STAR;
+  else if (!strncmp(lexer->start, "/=", len+1)) { ++lexer->curr; t.type = TT_SLASH_EQ; }
   else if (!strncmp(lexer->start, "/", len)) t.type = TT_SLASH;
+  else if (!strncmp(lexer->start, "<<=", len+2)) { lexer->curr += 2; t.type = TT_LESS_LESS_EQ; }
+  else if (!strncmp(lexer->start, "<<", len+1)) { ++lexer->curr; t.type = TT_LESS_LESS; }
   else if (!strncmp(lexer->start, "<=", len+1)) { ++lexer->curr; t.type = TT_LESS_EQ; }
   else if (!strncmp(lexer->start, "<", len)) t.type = TT_LESS;
+  else if (!strncmp(lexer->start, ">>=", len+2)) { lexer->curr += 2; t.type = TT_GREATER_GREATER_EQ; }
+  else if (!strncmp(lexer->start, ">>", len+1)) { ++lexer->curr; t.type = TT_GREATER_GREATER; }
   else if (!strncmp(lexer->start, ">=", len+1)) { ++lexer->curr; t.type = TT_GREATER_EQ; }
   else if (!strncmp(lexer->start, ">", len)) t.type = TT_GREATER;
   else if (!strncmp(lexer->start, "==", len+1)) { ++lexer->curr; t.type = TT_EQ_EQ; }
@@ -172,16 +200,24 @@ Token lexerNext(Lexer *lexer) {
   else if (!strncmp(lexer->start, "!", len)) t.type = TT_BANG;
   else if (!strncmp(lexer->start, "&&", len+1)) { ++lexer->curr; t.type = TT_AMPER_AMPER; }
   else if (!strncmp(lexer->start, "||", len+1)) { ++lexer->curr; t.type = TT_PIPE_PIPE; }
+  else if (!strncmp(lexer->start, "~", len)) t.type = TT_TILDA;
+  else if (!strncmp(lexer->start, "^=", len+1)) { ++lexer->curr; t.type = TT_CARAT_EQ; }
+  else if (!strncmp(lexer->start, "^", len)) t.type = TT_CARAT;
+  else if (!strncmp(lexer->start, "%=", len+1)) { ++lexer->curr; t.type = TT_PERCENT_EQ; }
+  else if (!strncmp(lexer->start, "%", len)) t.type = TT_PERCENT;
   else if (!strncmp(lexer->start, "(", len)) t.type = TT_LPAREN;
   else if (!strncmp(lexer->start, ")", len)) t.type = TT_RPAREN;
   else if (!strncmp(lexer->start, "{", len)) t.type = TT_LBRACE;
   else if (!strncmp(lexer->start, "}", len)) t.type = TT_RBRACE;
   else if (!strncmp(lexer->start, "[", len)) t.type = TT_LSQUARE;
   else if (!strncmp(lexer->start, "]", len)) t.type = TT_RSQUARE;
+  else if (!strncmp(lexer->start, "&=", len+1)) { ++lexer->curr; t.type = TT_AMPER_EQ; }
   else if (!strncmp(lexer->start, "&", len)) t.type = TT_AMPER;
+  else if (!strncmp(lexer->start, "|=", len+1)) { ++lexer->curr; t.type = TT_PIPE_EQ; }
   else if (!strncmp(lexer->start, "|", len)) t.type = TT_PIPE;
   else if (!strncmp(lexer->start, ";", len)) t.type = TT_SEMICOLON;
   else if (!strncmp(lexer->start, ",", len)) t.type = TT_COMMA;
+  else if (!strncmp(lexer->start, "...", len+2)) { lexer->curr += 2; t.type = TT_ELLIPSIS; }
   else if (!strncmp(lexer->start, ".", len)) t.type = TT_DOT;
   t.lexemeLen = lexer->curr - lexer->start;
 

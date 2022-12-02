@@ -47,9 +47,13 @@ typedef enum {
   TT_CHAR,
 
   TT_PLUS,
+  TT_PLUS_EQ,
   TT_MINUS,
+  TT_MINUS_EQ,
   TT_STAR,
+  TT_STAR_EQ,
   TT_SLASH,
+  TT_SLASH_EQ,
   TT_LESS,
   TT_LESS_EQ,
   TT_GREATER,
@@ -60,6 +64,17 @@ typedef enum {
   TT_BANG_EQ,
   TT_AMPER_AMPER,
   TT_PIPE_PIPE,
+  TT_TILDA,
+  TT_CARAT,
+  TT_CARAT_EQ,
+  TT_PERCENT,
+  TT_PERCENT_EQ,
+  TT_LESS_LESS,
+  TT_LESS_LESS_EQ,
+  TT_GREATER_GREATER,
+  TT_GREATER_GREATER_EQ,
+  TT_AMPER_EQ,
+  TT_PIPE_EQ,
 
   TT_LPAREN,
   TT_RPAREN,
@@ -73,6 +88,9 @@ typedef enum {
   TT_COMMA,
   TT_DOT,
   TT_ARROW,
+  TT_ELLIPSIS,
+  TT_PLUS_PLUS,
+  TT_MINUS_MINUS,
 } TokenType;
 
 typedef struct {
