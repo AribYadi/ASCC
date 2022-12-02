@@ -18,6 +18,10 @@ void tokenPrint(Token t) {
     case TT_MINUS: printf("TT_MINUS"); break;
     case TT_STAR: printf("TT_STAR"); break;
     case TT_SLASH: printf("TT_SLASH"); break;
+    case TT_LESS: printf("TT_LESS"); break;
+    case TT_LESS_EQ: printf("TT_LESS_EQ"); break;
+    case TT_GREATER: printf("TT_GREATER"); break;
+    case TT_GREATER_EQ: printf("TT_GREATER_EQ"); break;
     case TT_LPAREN: printf("TT_LPAREN"); break;
     case TT_RPAREN: printf("TT_RPAREN"); break;
     case TT_LBRACE: printf("TT_LBRACE"); break;
@@ -72,6 +76,10 @@ Token lexerNext(Lexer *lexer) {
   else if (!strncmp(lexer->start, "-", len)) t.type = TT_MINUS;
   else if (!strncmp(lexer->start, "*", len)) t.type = TT_STAR;
   else if (!strncmp(lexer->start, "/", len)) t.type = TT_SLASH;
+  else if (!strncmp(lexer->start, "<=", len+1)) { ++lexer->curr; t.type = TT_LESS_EQ; }
+  else if (!strncmp(lexer->start, "<", len)) t.type = TT_LESS;
+  else if (!strncmp(lexer->start, ">=", len+1)) { ++lexer->curr; t.type = TT_GREATER_EQ; }
+  else if (!strncmp(lexer->start, ">", len)) t.type = TT_GREATER;
   else if (!strncmp(lexer->start, "(", len)) t.type = TT_LPAREN;
   else if (!strncmp(lexer->start, ")", len)) t.type = TT_RPAREN;
   else if (!strncmp(lexer->start, "{", len)) t.type = TT_LBRACE;

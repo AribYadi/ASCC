@@ -17,6 +17,11 @@ typedef enum {
   TT_MINUS,
   TT_STAR,
   TT_SLASH,
+  TT_LESS,
+  TT_LESS_EQ,
+  TT_GREATER,
+  TT_GREATER_EQ,
+
   TT_LPAREN,
   TT_RPAREN,
   TT_LBRACE,
