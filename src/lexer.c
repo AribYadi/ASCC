@@ -64,7 +64,10 @@ TokenType lexChar(Lexer *lexer) {
 }
 
 Token lexerNext(Lexer *lexer) {
+  while (lexer->curr[0] == ' ' || lexer->curr[0] == '\n' || lexer->curr[0] == '\t') ++lexer->curr;
+  lexer->start = lexer->curr;
   ++lexer->curr;
+
   size_t len = lexer->curr - lexer->start;
 
   Token t = {.type = TT_UNKNOWN, .lexeme = lexer->start};
@@ -87,8 +90,6 @@ Token lexerNext(Lexer *lexer) {
   else if (!strncmp(lexer->start, "[", len)) t.type = TT_LSQUARE;
   else if (!strncmp(lexer->start, "]", len)) t.type = TT_RSQUARE;
   t.lexemeLen = lexer->curr - lexer->start;
-
-  lexer->start = lexer->curr;
 
   return t;
 }
