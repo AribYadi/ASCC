@@ -1,0 +1,7 @@
+{
+  "files.associations": {
+    "*.pyr": "pyrlang",
+    "stdio.h": "c",
+    "parser.h": "c"
+  }
+}

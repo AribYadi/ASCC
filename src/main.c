@@ -2,7 +2,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#include "lexer.h"
+#include "parser.h"
 
 char *readFile(char *path);
 
@@ -10,10 +10,10 @@ int main(int argc, char **argv) {
   char *src = readFile(argv[1]);
 
   if (src) {
-    Lexer lexer = lexerNew(src);
-    Token t = lexerNext(&lexer);
-    do tokenPrint(t);
-    while ((t = lexerNext(&lexer)).type != TT_EOF);
+    ExprVec exprs = parse(src);
+    printf("len: %zu, cap: %zu\n", exprs.len, exprs.cap);
+    exprVecPrint(&exprs);
+    exprVecFree(&exprs);
 
     free(src);
   }
