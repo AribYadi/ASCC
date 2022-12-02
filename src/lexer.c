@@ -11,9 +11,17 @@ void tokenPrint(Token t) {
     case TT_UNKNOWN: printf("TT_UNKNOWN"); break;
     case TT_UNCLOSED_STR: printf("TT_UNCLOSED_STR"); break;
     case TT_UNCLOSED_CHAR: printf("TT_UNCLOSED_CHAR"); break;
+    case TT_INT_TYPE: printf("TT_INT_TYPE"); break;
+    case TT_CHAR_TYPE: printf("TT_CHAR_TYPE"); break;
+    case TT_FLOAT_TYPE: printf("TT_FLOAT_TYPE"); break;
+    case TT_DOUBLE_TYPE: printf("TT_DOUBLE_TYPE"); break;
+    case TT_LONG: printf("TT_LONG"); break;
+    case TT_UNSIGNED: printf("TT_UNSIGNED"); break;
     case TT_STR: printf("TT_STR"); break;
     case TT_INT: printf("TT_INT"); break;
     case TT_CHAR: printf("TT_CHAR"); break;
+    case TT_TRUE: printf("TT_TRUE"); break;
+    case TT_FALSE: printf("TT_FALSE"); break;
     case TT_PLUS: printf("TT_PLUS"); break;
     case TT_MINUS: printf("TT_MINUS"); break;
     case TT_STAR: printf("TT_STAR"); break;
@@ -75,6 +83,12 @@ TokenType lexChar(Lexer *lexer) {
   return TT_CHAR;
 }
 
+int testKeyword(Lexer *lexer, const char *keyword, int len) {
+  if (strncmp(lexer->start, keyword, len) != 0) return 0;
+  lexer->curr += len - 1;
+  return 1;
+}
+
 Token lexerNext(Lexer *lexer) {
   while (lexer->curr[0] == ' ' || lexer->curr[0] == '\n' || lexer->curr[0] == '\t') ++lexer->curr;
   lexer->start = lexer->curr;
@@ -84,9 +98,17 @@ Token lexerNext(Lexer *lexer) {
 
   Token t = {.type = TT_UNKNOWN, .lexeme = lexer->start};
   if (!lexer->start[0]) t.type = TT_EOF;
+  else if (testKeyword(lexer, "int", 3)) t.type = TT_INT_TYPE;
+  else if (testKeyword(lexer, "char", 4)) t.type = TT_CHAR_TYPE;
+  else if (testKeyword(lexer, "float", 5)) t.type = TT_FLOAT_TYPE;
+  else if (testKeyword(lexer, "double", 6)) t.type = TT_DOUBLE_TYPE;
+  else if (testKeyword(lexer, "long", 4)) t.type = TT_LONG;
+  else if (testKeyword(lexer, "unsigned", 8)) t.type = TT_UNSIGNED;
   else if (lexer->start[0] == '"') t.type = lexStr(lexer);
   else if (lexer->start[0] >= '0' && lexer->start[0] <= '9') t.type = lexInt(lexer);
   else if (lexer->start[0] == '\'') t.type = lexChar(lexer);
+  else if (testKeyword(lexer, "true", 4)) t.type = TT_TRUE;
+  else if (testKeyword(lexer, "false", 5)) t.type = TT_FALSE;
   else if (!strncmp(lexer->start, "+", len)) t.type = TT_PLUS;
   else if (!strncmp(lexer->start, "->", len+1)) { ++lexer->curr; t.type = TT_ARROW; }
   else if (!strncmp(lexer->start, "-", len)) t.type = TT_MINUS;
