@@ -22,12 +22,24 @@ void tokenPrint(Token t) {
     case TT_LESS_EQ: printf("TT_LESS_EQ"); break;
     case TT_GREATER: printf("TT_GREATER"); break;
     case TT_GREATER_EQ: printf("TT_GREATER_EQ"); break;
+    case TT_EQ: printf("TT_EQ"); break;
+    case TT_EQ_EQ: printf("TT_EQ_EQ"); break;
+    case TT_BANG: printf("TT_BANG"); break;
+    case TT_BANG_EQ: printf("TT_BANG_EQ"); break;
+    case TT_AMPER_AMPER: printf("TT_AMPER_AMPER"); break;
+    case TT_PIPE_PIPE: printf("TT_PIPE_PIPE"); break;
     case TT_LPAREN: printf("TT_LPAREN"); break;
     case TT_RPAREN: printf("TT_RPAREN"); break;
     case TT_LBRACE: printf("TT_LBRACE"); break;
     case TT_RBRACE: printf("TT_RBRACE"); break;
     case TT_LSQUARE: printf("TT_LSQUARE"); break;
     case TT_RSQUARE: printf("TT_RSQUARE"); break;
+    case TT_AMPER: printf("TT_AMPER"); break;
+    case TT_PIPE: printf("TT_PIPE"); break;
+    case TT_SEMICOLON: printf("TT_SEMICOLON"); break;
+    case TT_COMMA: printf("TT_COMMA"); break;
+    case TT_DOT: printf("TT_DOT"); break;
+    case TT_ARROW: printf("TT_ARROW"); break;
   }
   printf("', lexeme: '%.*s' }\n", t.lexemeLen, t.lexeme); 
 }
@@ -76,6 +88,7 @@ Token lexerNext(Lexer *lexer) {
   else if (lexer->start[0] >= '0' && lexer->start[0] <= '9') t.type = lexInt(lexer);
   else if (lexer->start[0] == '\'') t.type = lexChar(lexer);
   else if (!strncmp(lexer->start, "+", len)) t.type = TT_PLUS;
+  else if (!strncmp(lexer->start, "->", len+1)) { ++lexer->curr; t.type = TT_ARROW; }
   else if (!strncmp(lexer->start, "-", len)) t.type = TT_MINUS;
   else if (!strncmp(lexer->start, "*", len)) t.type = TT_STAR;
   else if (!strncmp(lexer->start, "/", len)) t.type = TT_SLASH;
@@ -83,12 +96,23 @@ Token lexerNext(Lexer *lexer) {
   else if (!strncmp(lexer->start, "<", len)) t.type = TT_LESS;
   else if (!strncmp(lexer->start, ">=", len+1)) { ++lexer->curr; t.type = TT_GREATER_EQ; }
   else if (!strncmp(lexer->start, ">", len)) t.type = TT_GREATER;
+  else if (!strncmp(lexer->start, "==", len+1)) { ++lexer->curr; t.type = TT_EQ_EQ; }
+  else if (!strncmp(lexer->start, "=", len)) t.type = TT_EQ;
+  else if (!strncmp(lexer->start, "!=", len+1)) { ++lexer->curr; t.type = TT_BANG_EQ; }
+  else if (!strncmp(lexer->start, "!", len)) t.type = TT_BANG;
+  else if (!strncmp(lexer->start, "&&", len+1)) { ++lexer->curr; t.type = TT_AMPER_AMPER; }
+  else if (!strncmp(lexer->start, "||", len+1)) { ++lexer->curr; t.type = TT_PIPE_PIPE; }
   else if (!strncmp(lexer->start, "(", len)) t.type = TT_LPAREN;
   else if (!strncmp(lexer->start, ")", len)) t.type = TT_RPAREN;
   else if (!strncmp(lexer->start, "{", len)) t.type = TT_LBRACE;
   else if (!strncmp(lexer->start, "}", len)) t.type = TT_RBRACE;
   else if (!strncmp(lexer->start, "[", len)) t.type = TT_LSQUARE;
   else if (!strncmp(lexer->start, "]", len)) t.type = TT_RSQUARE;
+  else if (!strncmp(lexer->start, "&", len)) t.type = TT_AMPER;
+  else if (!strncmp(lexer->start, "|", len)) t.type = TT_PIPE;
+  else if (!strncmp(lexer->start, ";", len)) t.type = TT_SEMICOLON;
+  else if (!strncmp(lexer->start, ",", len)) t.type = TT_COMMA;
+  else if (!strncmp(lexer->start, ".", len)) t.type = TT_DOT;
   t.lexemeLen = lexer->curr - lexer->start;
 
   return t;

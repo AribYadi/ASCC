@@ -21,6 +21,12 @@ typedef enum {
   TT_LESS_EQ,
   TT_GREATER,
   TT_GREATER_EQ,
+  TT_EQ,
+  TT_EQ_EQ,
+  TT_BANG,
+  TT_BANG_EQ,
+  TT_AMPER_AMPER,
+  TT_PIPE_PIPE,
 
   TT_LPAREN,
   TT_RPAREN,
@@ -28,6 +34,12 @@ typedef enum {
   TT_RBRACE,
   TT_LSQUARE,
   TT_RSQUARE,
+  TT_AMPER,
+  TT_PIPE,
+  TT_SEMICOLON,
+  TT_COMMA,
+  TT_DOT,
+  TT_ARROW,
 } TokenType;
 
 typedef struct {
