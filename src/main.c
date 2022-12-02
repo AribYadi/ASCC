@@ -9,12 +9,15 @@ char *readFile(char *path);
 int main(int argc, char **argv) {
   char *src = readFile(argv[1]);
 
-  Lexer lexer = lexerNew(src);
-  Token t = lexerNext(&lexer);
-  do tokenPrint(t);
-  while ((t = lexerNext(&lexer)).type != TT_EOF);
+  if (src) {
+    Lexer lexer = lexerNew(src);
+    Token t = lexerNext(&lexer);
+    do tokenPrint(t);
+    while ((t = lexerNext(&lexer)).type != TT_EOF);
 
-  free(src);
+    free(src);
+  }
+
   return 0;
 }
 
