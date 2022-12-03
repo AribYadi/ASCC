@@ -91,7 +91,7 @@ void tokenPrint(Token t) {
     case TT_PLUS_PLUS: printf("TT_PLUS_PLUS"); break;
     case TT_MINUS_MINUS: printf("TT_MINUS_MINUS"); break;
   }
-  printf("', lexeme: '%.*s' }\n", t.lexemeLen, t.lexeme); 
+  printf("', lexeme: '%.*s' }", t.lexemeLen, t.lexeme); 
 }
 
 Lexer lexerNew(char *src) {

@@ -11,7 +11,6 @@ int main(int argc, char **argv) {
 
   if (src) {
     ExprVec exprs = parse(src);
-    printf("len: %zu, cap: %zu\n", exprs.len, exprs.cap);
     exprVecPrint(&exprs);
     exprVecFree(&exprs);
 

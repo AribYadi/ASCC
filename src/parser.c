@@ -7,8 +7,16 @@ void exprPrint(Expr *expr) {
   printf("Expr { type: '");
   switch (expr->type) {
     case EXPR_INT: printf("EXPR_INT', value: '%zu'", expr->value.intv); break;
+    case EXPR_BINARY:
+      printf("EXPR_BINARY', lhs: ");
+      exprPrint(expr->value.binary.lhs);
+      printf(", rhs: ");
+      exprPrint(expr->value.binary.rhs);
+      printf(", op: ");
+      tokenPrint(expr->value.binary.op);
+      break;
   }
-  printf(" }\n");
+  printf(" }");
 }
 
 ExprVec exprVecNew() {
@@ -30,6 +38,7 @@ void exprVecPrint(ExprVec *exprVec) {
   for (int i = 0; i < exprVec->len; ++i) {
     printf("  ");
     exprPrint(exprVec->raw + i);
+    printf("\n");
   }
   printf("]\n");
 }
@@ -44,8 +53,25 @@ void exprVecFree(ExprVec *exprVec) {
 
 ExprVec parse(char *src) {
   ExprVec exprs = exprVecNew();
-  for (int i = 0; i < 10; ++i) {
-    exprVecPush(&exprs, (Expr){.type = EXPR_INT, .value = i});
-  }
+
+  Expr *lhs = malloc(sizeof(Expr));
+  *lhs = (Expr){
+    .type = EXPR_INT,
+    .value = (ExprValue){.intv = 1},
+  };
+  Expr *rhs = malloc(sizeof(Expr));
+  *rhs = (Expr){
+    .type = EXPR_INT,
+    .value = (ExprValue){.intv = 2},
+  };
+
+  exprVecPush(&exprs, (Expr){
+    .type = EXPR_BINARY,
+    .value = (ExprValue){.binary = (ExprBinary){
+      .lhs = lhs,
+      .rhs = rhs,
+      .op = (Token){.type = TT_PLUS, .lexeme = "+", 1}
+    }},
+  });
   return exprs;
 }
