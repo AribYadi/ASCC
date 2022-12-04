@@ -100,6 +100,21 @@ const char *tokenLexeme(Token *t) {
   return buf;
 }
 
+int tokenPrefixBp(Token *t) {
+  switch (t->type) {
+    case TT_PLUS_PLUS:
+    case TT_MINUS_MINUS:
+    case TT_PLUS:
+    case TT_MINUS:
+    case TT_BANG:
+    case TT_TILDA:
+    case TT_STAR:
+    case TT_AMPER:
+      return 25;
+    default: return 0;
+  }
+}
+
 int *tokenInfixBp(Token *t) {
   int *ret = malloc(2 * sizeof(int));
   switch (t->type) {

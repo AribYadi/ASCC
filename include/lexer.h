@@ -101,6 +101,7 @@ typedef struct {
 
 const char *tokenType(Token *t);
 const char *tokenLexeme(Token *t);
+int tokenPrefixBp(Token *t);
 int *tokenInfixBp(Token *t);
 void tokenPrint(Token *t);
 

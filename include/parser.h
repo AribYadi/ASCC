@@ -7,6 +7,7 @@ typedef enum {
   EXPR_INT,
   EXPR_STR,
   EXPR_CHAR,
+  EXPR_UNARY,
   EXPR_BINARY,
 } ExprType;
 
@@ -16,6 +17,15 @@ typedef struct {
 } ExprStr;
 
 typedef struct {
+  enum {
+    POS_PREFIX,
+    POS_POSTFIX,
+  } position;
+  void *opr;
+  Token opc;
+} ExprUnary;
+
+typedef struct {
   void *lhs;
   void *rhs;
   Token op;
@@ -23,8 +33,9 @@ typedef struct {
 
 typedef union {
   size_t intv;
-  char charv;
   ExprStr str;
+  char charv;
+  ExprUnary unary;
   ExprBinary binary;
 } ExprValue;
 
