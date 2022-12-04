@@ -2,21 +2,27 @@
 #include <stdlib.h>
 
 #include "parser.h"
+#include "globals.h"
 
 void exprPrint(Expr *expr) {
-  printf("Expr { type: '");
+  const char *indent = getPrettyIndent();
+
+  printf("Expr {\n%s  type: '", indent);
   switch (expr->type) {
-    case EXPR_INT: printf("EXPR_INT', value: '%zu'", expr->value.intv); break;
-    case EXPR_BINARY:
-      printf("EXPR_BINARY', lhs: ");
+    case EXPR_INT: printf("EXPR_INT',\n%s  value: '%zu'", indent, expr->value.intv); break;
+    case EXPR_BINARY: {
+      ++indentSize;
+      printf("EXPR_BINARY',\n%s  lhs: ", indent);
       exprPrint(expr->value.binary.lhs);
-      printf(", rhs: ");
+      printf(",\n%s  rhs: ", indent);
       exprPrint(expr->value.binary.rhs);
-      printf(", op: ");
-      tokenPrint(expr->value.binary.op);
+      printf(",\n%s  op: ", indent);
+      tokenPrint(&expr->value.binary.op);
+      --indentSize;
       break;
+    }
   }
-  printf(" }");
+  printf("\n%s}", indent);
 }
 
 ExprVec exprVecNew() {
@@ -34,13 +40,17 @@ void exprVecPush(ExprVec *exprVec, Expr value) {
 }
 
 void exprVecPrint(ExprVec *exprVec) {
+  const char *indent = getPrettyIndent();
+
   printf("ExprVec [\n");
+  ++indentSize;
   for (int i = 0; i < exprVec->len; ++i) {
-    printf("  ");
+    printf("%s  ", indent);
     exprPrint(exprVec->raw + i);
     printf("\n");
   }
-  printf("]\n");
+  --indentSize;
+  printf("]");
 }
 
 Expr exprVecPop(ExprVec *exprVec) {
@@ -51,27 +61,76 @@ void exprVecFree(ExprVec *exprVec) {
   free(exprVec->raw);
 }
 
+char *parseExpr(Lexer *lexer, Expr *buf, int bp) {
+  Expr expr;
+  Token t = lexerNext(lexer);
+  switch (t.type) {
+    case TT_INT: {
+      expr.type = EXPR_INT;
+      expr.value.intv = strtoull(tokenLexeme(&t), NULL, 10);
+      break;
+    }
+    default: {
+      char *err = malloc(512 * sizeof(char));
+      snprintf(err, 512, "No expression starts with '%s'!", tokenType(&t));
+      return err;
+    }
+  }
+
+  while (1) {
+    Token op = lexerPeek(lexer);
+    switch (op.type) {
+      case TT_PLUS:
+      case TT_MINUS:
+      case TT_STAR:
+      case TT_SLASH:
+        break;
+      case TT_EOF: goto end; break;
+      default: {
+        char *err = malloc(512 * sizeof(char));
+        snprintf(err, 512, "'%s' is not an operator!", tokenType(&t));
+        return err;
+      }
+    }
+
+    int *op_bp = tokenInfixBp(&op);
+    if (!op_bp || op_bp[0] < bp) break;
+
+    lexerNext(lexer);
+
+    Expr rhs;
+    char *err = parseExpr(lexer, &rhs, op_bp[1]);
+    if (err) return err;
+
+    Expr lhs = expr;
+
+    expr.type = EXPR_BINARY;
+    expr.value.binary.lhs = malloc(sizeof(Expr));
+    *(Expr *)expr.value.binary.lhs = lhs;
+    expr.value.binary.rhs = malloc(sizeof(Expr));
+    *(Expr *)expr.value.binary.rhs = rhs;
+    expr.value.binary.op = op;
+  }
+
+end:
+  *buf = expr;
+  return NULL;
+}
+
 ExprVec parse(char *src) {
   ExprVec exprs = exprVecNew();
+  Lexer lexer = lexerNew(src);
 
-  Expr *lhs = malloc(sizeof(Expr));
-  *lhs = (Expr){
-    .type = EXPR_INT,
-    .value = (ExprValue){.intv = 1},
-  };
-  Expr *rhs = malloc(sizeof(Expr));
-  *rhs = (Expr){
-    .type = EXPR_INT,
-    .value = (ExprValue){.intv = 2},
-  };
+  while (lexerPeek(&lexer).type != TT_EOF) {
+    Expr expr;
+    char *err = parseExpr(&lexer, &expr, 0);
+    if (!err) exprVecPush(&exprs, expr);
+    else {
+      fprintf(stderr, "%s\n", err);
+      free(err);
+      exit(1);
+    }
+  }
 
-  exprVecPush(&exprs, (Expr){
-    .type = EXPR_BINARY,
-    .value = (ExprValue){.binary = (ExprBinary){
-      .lhs = lhs,
-      .rhs = rhs,
-      .op = (Token){.type = TT_PLUS, .lexeme = "+", 1}
-    }},
-  });
   return exprs;
 }

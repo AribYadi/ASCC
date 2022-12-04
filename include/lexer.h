@@ -99,7 +99,10 @@ typedef struct {
   int lexemeLen;
 } Token;
 
-void tokenPrint(Token t);
+const char *tokenType(Token *t);
+const char *tokenLexeme(Token *t);
+int *tokenInfixBp(Token *t);
+void tokenPrint(Token *t);
 
 typedef struct {
   char *start;
@@ -108,5 +111,6 @@ typedef struct {
 
 Lexer lexerNew(char *src);
 Token lexerNext(Lexer *lexer);
+Token lexerPeek(Lexer *lexer);
 
 #endif

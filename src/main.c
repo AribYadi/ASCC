@@ -3,6 +3,17 @@
 #include <stdlib.h>
 
 #include "parser.h"
+#include "globals.h"
+
+int indentSize = 0;
+const char *getPrettyIndent() {
+  char *indent = malloc((indentSize * PRETTY_INDENT_SIZE + 1) * sizeof(char));
+  for (int i = 0; i < indentSize * PRETTY_INDENT_SIZE; ++i) {
+    indent[i] = ' ';
+  }
+  indent[indentSize * PRETTY_INDENT_SIZE] = '\0';
+  return indent;
+}
 
 char *readFile(char *path);
 
@@ -12,6 +23,7 @@ int main(int argc, char **argv) {
   if (src) {
     ExprVec exprs = parse(src);
     exprVecPrint(&exprs);
+    printf("\n");
     exprVecFree(&exprs);
 
     free(src);

@@ -3,95 +3,127 @@
 #include <stdlib.h>
 
 #include "lexer.h"
+#include "globals.h"
 
-void tokenPrint(Token t) {
-  printf("Token { type: '");
-  switch (t.type) {
-    case TT_EOF: printf("TT_EOF"); break;
-    case TT_UNKNOWN: printf("TT_UNKNOWN"); break;
-    case TT_UNCLOSED_STR: printf("TT_UNCLOSED_STR"); break;
-    case TT_UNCLOSED_CHAR: printf("TT_UNCLOSED_CHAR"); break;
-    case TT_INT_TYPE: printf("TT_INT_TYPE"); break;
-    case TT_CHAR_TYPE: printf("TT_CHAR_TYPE"); break;
-    case TT_FLOAT_TYPE: printf("TT_FLOAT_TYPE"); break;
-    case TT_DOUBLE_TYPE: printf("TT_DOUBLE_TYPE"); break;
-    case TT_LONG: printf("TT_LONG"); break;
-    case TT_UNSIGNED: printf("TT_UNSIGNED"); break;
-    case TT_AUTO: printf("TT_AUTO"); break;
-    case TT_BREAK: printf("TT_BREAK"); break;
-    case TT_CASE: printf("TT_CASE"); break;
-    case TT_CONST: printf("TT_CONST"); break;
-    case TT_CONTINUE: printf("TT_CONTINUE"); break;
-    case TT_DEFAULT: printf("TT_DEFAULT"); break;
-    case TT_DO: printf("TT_DO"); break;
-    case TT_ELSE: printf("TT_ELSE"); break;
-    case TT_ENUM: printf("TT_ENUM"); break;
-    case TT_EXTERN: printf("TT_EXTERN"); break;
-    case TT_FOR: printf("TT_FOR"); break;
-    case TT_GOTO: printf("TT_GOTO"); break;
-    case TT_IF: printf("TT_IF"); break;
-    case TT_REGISTER: printf("TT_REGISTER"); break;
-    case TT_RETURN: printf("TT_RETURN"); break;
-    case TT_SHORT: printf("TT_SHORT"); break;
-    case TT_SIGNED: printf("TT_SIGNED"); break;
-    case TT_SIZEOF: printf("TT_SIZEOF"); break;
-    case TT_STATIC: printf("TT_STATIC"); break;
-    case TT_STRUCT: printf("TT_STRUCT"); break;
-    case TT_SWITCH: printf("TT_SWITCH"); break;
-    case TT_TYPEDEF: printf("TT_TYPEDEF"); break;
-    case TT_UNION: printf("TT_UNION"); break;
-    case TT_VOID_TYPE: printf("TT_VOID_TYPE"); break;
-    case TT_VOLATILE: printf("TT_VOLATILE"); break;
-    case TT_WHILE: printf("TT_WHILE"); break;
-    case TT_STR: printf("TT_STR"); break;
-    case TT_INT: printf("TT_INT"); break;
-    case TT_CHAR: printf("TT_CHAR"); break;
-    case TT_PLUS: printf("TT_PLUS"); break;
-    case TT_PLUS_EQ: printf("TT_PLUS_EQ"); break;
-    case TT_MINUS: printf("TT_MINUS"); break;
-    case TT_MINUS_EQ: printf("TT_MINUS_EQ"); break;
-    case TT_STAR: printf("TT_STAR"); break;
-    case TT_STAR_EQ: printf("TT_STAR_EQ"); break;
-    case TT_SLASH: printf("TT_SLASH"); break;
-    case TT_SLASH_EQ: printf("TT_SLASH_EQ"); break;
-    case TT_LESS: printf("TT_LESS"); break;
-    case TT_LESS_EQ: printf("TT_LESS_EQ"); break;
-    case TT_GREATER: printf("TT_GREATER"); break;
-    case TT_GREATER_EQ: printf("TT_GREATER_EQ"); break;
-    case TT_EQ: printf("TT_EQ"); break;
-    case TT_EQ_EQ: printf("TT_EQ_EQ"); break;
-    case TT_BANG: printf("TT_BANG"); break;
-    case TT_BANG_EQ: printf("TT_BANG_EQ"); break;
-    case TT_AMPER_AMPER: printf("TT_AMPER_AMPER"); break;
-    case TT_PIPE_PIPE: printf("TT_PIPE_PIPE"); break;
-    case TT_TILDA: printf("TT_TILDA"); break;
-    case TT_CARAT: printf("TT_CARAT"); break;
-    case TT_CARAT_EQ: printf("TT_CARAT_EQ"); break;
-    case TT_PERCENT: printf("TT_PERCENT"); break;
-    case TT_PERCENT_EQ: printf("TT_PERCENT_EQ"); break;
-    case TT_LESS_LESS: printf("TT_LESS_LESS"); break;
-    case TT_LESS_LESS_EQ: printf("TT_LESS_LESS_EQ"); break;
-    case TT_GREATER_GREATER: printf("TT_GREATER_GREATER"); break;
-    case TT_GREATER_GREATER_EQ: printf("TT_GREATER_GREATER_EQ"); break;
-    case TT_AMPER_EQ: printf("TT_AMPER_EQ"); break;
-    case TT_PIPE_EQ: printf("TT_PIPE_EQ"); break;
-    case TT_LPAREN: printf("TT_LPAREN"); break;
-    case TT_RPAREN: printf("TT_RPAREN"); break;
-    case TT_LBRACE: printf("TT_LBRACE"); break;
-    case TT_RBRACE: printf("TT_RBRACE"); break;
-    case TT_LSQUARE: printf("TT_LSQUARE"); break;
-    case TT_RSQUARE: printf("TT_RSQUARE"); break;
-    case TT_AMPER: printf("TT_AMPER"); break;
-    case TT_PIPE: printf("TT_PIPE"); break;
-    case TT_SEMICOLON: printf("TT_SEMICOLON"); break;
-    case TT_COMMA: printf("TT_COMMA"); break;
-    case TT_DOT: printf("TT_DOT"); break;
-    case TT_ARROW: printf("TT_ARROW"); break;
-    case TT_ELLIPSIS: printf("TT_ELLIPSIS"); break;
-    case TT_PLUS_PLUS: printf("TT_PLUS_PLUS"); break;
-    case TT_MINUS_MINUS: printf("TT_MINUS_MINUS"); break;
+const char *tokenType(Token *t) {
+  switch (t->type) {
+    case TT_EOF: return "TT_EOF";
+    case TT_UNKNOWN: return "TT_UNKNOWN";
+    case TT_UNCLOSED_STR: return "TT_UNCLOSED_STR";
+    case TT_UNCLOSED_CHAR: return "TT_UNCLOSED_CHAR";
+    case TT_INT_TYPE: return "TT_INT_TYPE";
+    case TT_CHAR_TYPE: return "TT_CHAR_TYPE";
+    case TT_FLOAT_TYPE: return "TT_FLOAT_TYPE";
+    case TT_DOUBLE_TYPE: return "TT_DOUBLE_TYPE";
+    case TT_LONG: return "TT_LONG";
+    case TT_UNSIGNED: return "TT_UNSIGNED";
+    case TT_AUTO: return "TT_AUTO";
+    case TT_BREAK: return "TT_BREAK";
+    case TT_CASE: return "TT_CASE";
+    case TT_CONST: return "TT_CONST";
+    case TT_CONTINUE: return "TT_CONTINUE";
+    case TT_DEFAULT: return "TT_DEFAULT";
+    case TT_DO: return "TT_DO";
+    case TT_ELSE: return "TT_ELSE";
+    case TT_ENUM: return "TT_ENUM";
+    case TT_EXTERN: return "TT_EXTERN";
+    case TT_FOR: return "TT_FOR";
+    case TT_GOTO: return "TT_GOTO";
+    case TT_IF: return "TT_IF";
+    case TT_REGISTER: return "TT_REGISTER";
+    case TT_RETURN: return "TT_RETURN";
+    case TT_SHORT: return "TT_SHORT";
+    case TT_SIGNED: return "TT_SIGNED";
+    case TT_SIZEOF: return "TT_SIZEOF";
+    case TT_STATIC: return "TT_STATIC";
+    case TT_STRUCT: return "TT_STRUCT";
+    case TT_SWITCH: return "TT_SWITCH";
+    case TT_TYPEDEF: return "TT_TYPEDEF";
+    case TT_UNION: return "TT_UNION";
+    case TT_VOID_TYPE: return "TT_VOID_TYPE";
+    case TT_VOLATILE: return "TT_VOLATILE";
+    case TT_WHILE: return "TT_WHILE";
+    case TT_STR: return "TT_STR";
+    case TT_INT: return "TT_INT";
+    case TT_CHAR: return "TT_CHAR";
+    case TT_PLUS: return "TT_PLUS";
+    case TT_PLUS_EQ: return "TT_PLUS_EQ";
+    case TT_MINUS: return "TT_MINUS";
+    case TT_MINUS_EQ: return "TT_MINUS_EQ";
+    case TT_STAR: return "TT_STAR";
+    case TT_STAR_EQ: return "TT_STAR_EQ";
+    case TT_SLASH: return "TT_SLASH";
+    case TT_SLASH_EQ: return "TT_SLASH_EQ";
+    case TT_LESS: return "TT_LESS";
+    case TT_LESS_EQ: return "TT_LESS_EQ";
+    case TT_GREATER: return "TT_GREATER";
+    case TT_GREATER_EQ: return "TT_GREATER_EQ";
+    case TT_EQ: return "TT_EQ";
+    case TT_EQ_EQ: return "TT_EQ_EQ";
+    case TT_BANG: return "TT_BANG";
+    case TT_BANG_EQ: return "TT_BANG_EQ";
+    case TT_AMPER_AMPER: return "TT_AMPER_AMPER";
+    case TT_PIPE_PIPE: return "TT_PIPE_PIPE";
+    case TT_TILDA: return "TT_TILDA";
+    case TT_CARAT: return "TT_CARAT";
+    case TT_CARAT_EQ: return "TT_CARAT_EQ";
+    case TT_PERCENT: return "TT_PERCENT";
+    case TT_PERCENT_EQ: return "TT_PERCENT_EQ";
+    case TT_LESS_LESS: return "TT_LESS_LESS";
+    case TT_LESS_LESS_EQ: return "TT_LESS_LESS_EQ";
+    case TT_GREATER_GREATER: return "TT_GREATER_GREATER";
+    case TT_GREATER_GREATER_EQ: return "TT_GREATER_GREATER_EQ";
+    case TT_AMPER_EQ: return "TT_AMPER_EQ";
+    case TT_PIPE_EQ: return "TT_PIPE_EQ";
+    case TT_LPAREN: return "TT_LPAREN";
+    case TT_RPAREN: return "TT_RPAREN";
+    case TT_LBRACE: return "TT_LBRACE";
+    case TT_RBRACE: return "TT_RBRACE";
+    case TT_LSQUARE: return "TT_LSQUARE";
+    case TT_RSQUARE: return "TT_RSQUARE";
+    case TT_AMPER: return "TT_AMPER";
+    case TT_PIPE: return "TT_PIPE";
+    case TT_SEMICOLON: return "TT_SEMICOLON";
+    case TT_COMMA: return "TT_COMMA";
+    case TT_DOT: return "TT_DOT";
+    case TT_ARROW: return "TT_ARROW";
+    case TT_ELLIPSIS: return "TT_ELLIPSIS";
+    case TT_PLUS_PLUS: return "TT_PLUS_PLUS";
+    case TT_MINUS_MINUS: return "TT_MINUS_MINUS";
   }
-  printf("', lexeme: '%.*s' }", t.lexemeLen, t.lexeme); 
+}
+
+const char *tokenLexeme(Token *t) {
+  char *buf = malloc((t->lexemeLen + 1) * sizeof(char));
+  strncpy(buf, t->lexeme, t->lexemeLen);
+  buf[t->lexemeLen] = '\0';
+  return buf;
+}
+
+int *tokenInfixBp(Token *t) {
+  int *ret = malloc(2 * sizeof(int));
+  switch (t->type) {
+    case TT_PLUS:
+    case TT_MINUS: {
+       ret[0] = 1;
+       ret[1] = 2;
+       break;
+    }
+    case TT_STAR:
+    case TT_SLASH: {
+      ret[0] = 3;
+      ret[1] = 4;
+      break;
+    }
+    default: return NULL;
+  }
+  return ret;
+}
+
+void tokenPrint(Token *t) {
+  const char *indent = getPrettyIndent();
+
+  printf("Token {\n%s  type: '%s',\n%s  lexeme: '%.*s'\n%s}", indent, tokenType(t), indent, t->lexemeLen, t->lexeme, indent); 
 }
 
 Lexer lexerNew(char *src) {
@@ -221,5 +253,14 @@ Token lexerNext(Lexer *lexer) {
   else if (!strncmp(lexer->start, ".", len)) t.type = TT_DOT;
   t.lexemeLen = lexer->curr - lexer->start;
 
+  return t;
+}
+
+Token lexerPeek(Lexer *lexer) {
+  char *start = lexer->start;
+  char *curr = lexer->curr;
+  Token t = lexerNext(lexer);
+  lexer->start = start;
+  lexer->curr = curr;
   return t;
 }
