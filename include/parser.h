@@ -22,7 +22,7 @@ typedef struct {
     POS_POSTFIX,
   } position;
   void *opr;
-  Token opc;
+  Token op;
 } ExprUnary;
 
 typedef struct {

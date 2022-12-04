@@ -103,6 +103,7 @@ const char *tokenType(Token *t);
 const char *tokenLexeme(Token *t);
 int tokenPrefixBp(Token *t);
 int *tokenInfixBp(Token *t);
+int tokenPostfixBp(Token *t);
 void tokenPrint(Token *t);
 
 typedef struct {

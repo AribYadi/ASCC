@@ -14,10 +14,15 @@ void exprPrint(Expr *expr) {
     case EXPR_CHAR: printf("EXPR_CHAR',\n%s  value: '%c'", indent, expr->value.charv); break;
     case EXPR_UNARY: {
       ++indentSize;
-      printf("EXPR_UNARY',\n%s  opr: ", indent);
+      char *pos;
+      switch (expr->value.unary.position) {
+        case POS_PREFIX: pos = "POS_PREFIX"; break;
+        case POS_POSTFIX: pos = "POS_POSTFIX"; break;
+      }
+      printf("EXPR_UNARY',\n%s  position: '%s',\n%s  opr: ", indent, pos, indent);
       exprPrint(expr->value.unary.opr);
-      printf(",\n%s  opc: ", indent);
-      tokenPrint(&expr->value.unary.opc);
+      printf(",\n%s  op: ", indent);
+      tokenPrint(&expr->value.unary.op);
       --indentSize;
       break;
     }
@@ -108,7 +113,7 @@ char *parseExpr(Lexer *lexer, Expr *buf, int bp) {
       expr.value.unary.position = POS_PREFIX;
       expr.value.unary.opr = malloc(sizeof(rhs));
       *(Expr *)expr.value.unary.opr = rhs;
-      expr.value.unary.opc = t;
+      expr.value.unary.op = t;
       break;
     }
     case TT_LPAREN: {
@@ -162,6 +167,8 @@ char *parseExpr(Lexer *lexer, Expr *buf, int bp) {
       case TT_STAR:
       case TT_SLASH:
       case TT_PERCENT:
+      case TT_PLUS_PLUS:
+      case TT_MINUS_MINUS:
         break;
       case TT_EOF:
       case TT_RPAREN:
@@ -172,6 +179,21 @@ char *parseExpr(Lexer *lexer, Expr *buf, int bp) {
         snprintf(err, 512, "'%s' is not an operator!", tokenType(&t));
         return err;
       }
+    }
+
+    int lbp = tokenPostfixBp(&op);
+    if (lbp != -1) {
+      lexerNext(lexer);
+
+      Expr lhs = expr;
+
+      expr.type = EXPR_UNARY;
+      expr.value.unary.position = POS_POSTFIX;
+      expr.value.unary.opr = malloc(sizeof(Expr));
+      *(Expr *)expr.value.unary.opr = lhs;
+      expr.value.unary.op = op;
+
+      continue;
     }
 
     int *op_bp = tokenInfixBp(&op);

@@ -201,6 +201,15 @@ int *tokenInfixBp(Token *t) {
   return ret;
 }
 
+int tokenPostfixBp(Token *t) {
+  switch (t->type) {
+    case TT_PLUS_PLUS:
+    case TT_MINUS_MINUS:
+      return 26;
+    default: return 0;
+  }
+}
+
 void tokenPrint(Token *t) {
   const char *indent = getPrettyIndent();
 
