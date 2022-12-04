@@ -10,6 +10,8 @@ void exprPrint(Expr *expr) {
   printf("Expr {\n%s  type: '", indent);
   switch (expr->type) {
     case EXPR_INT: printf("EXPR_INT',\n%s  value: '%zu'", indent, expr->value.intv); break;
+    case EXPR_STR: printf("EXPR_STR',\n%s  value: '%.*s'", indent, expr->value.str.len, expr->value.str.str); break;
+    case EXPR_CHAR: printf("EXPR_CHAR',\n%s  value: '%c'", indent, expr->value.charv); break;
     case EXPR_BINARY: {
       ++indentSize;
       printf("EXPR_BINARY',\n%s  lhs: ", indent);
@@ -68,6 +70,17 @@ char *parseExpr(Lexer *lexer, Expr *buf, int bp) {
     case TT_INT: {
       expr.type = EXPR_INT;
       expr.value.intv = strtoull(tokenLexeme(&t), NULL, 10);
+      break;
+    }
+    case TT_STR: {
+      expr.type = EXPR_STR;
+      expr.value.str.str = t.lexeme + 1;
+      expr.value.str.len = t.lexemeLen - 1;
+      break;
+    }
+    case TT_CHAR: {
+      expr.type = EXPR_CHAR;
+      expr.value.charv = t.lexeme[1];
       break;
     }
     default: {

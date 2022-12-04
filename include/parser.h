@@ -5,8 +5,15 @@
 
 typedef enum {
   EXPR_INT,
+  EXPR_STR,
+  EXPR_CHAR,
   EXPR_BINARY,
 } ExprType;
+
+typedef struct {
+  char *str;
+  int len;
+} ExprStr;
 
 typedef struct {
   void *lhs;
@@ -16,6 +23,8 @@ typedef struct {
 
 typedef union {
   size_t intv;
+  char charv;
+  ExprStr str;
   ExprBinary binary;
 } ExprValue;
 
