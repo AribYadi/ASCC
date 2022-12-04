@@ -83,6 +83,17 @@ char *parseExpr(Lexer *lexer, Expr *buf, int bp) {
       expr.value.charv = t.lexeme[1];
       break;
     }
+    case TT_LPAREN: {
+      char *err = parseExpr(lexer, &expr, bp);
+      if (err) return err;
+      Token t = lexerNext(lexer);
+      if (t.type != TT_RPAREN) {
+        char *err = malloc(512 * sizeof(char));
+        snprintf(err, 512, "Expected 'TT_RPAREN' instead found '%s'!", tokenType(&t));
+        return err;
+      }
+      break;
+    }
     default: {
       char *err = malloc(512 * sizeof(char));
       snprintf(err, 512, "No expression starts with '%s'!", tokenType(&t));
@@ -98,7 +109,10 @@ char *parseExpr(Lexer *lexer, Expr *buf, int bp) {
       case TT_STAR:
       case TT_SLASH:
         break;
-      case TT_EOF: goto end; break;
+      case TT_EOF:
+      case TT_RPAREN:
+        goto end;
+        break;
       default: {
         char *err = malloc(512 * sizeof(char));
         snprintf(err, 512, "'%s' is not an operator!", tokenType(&t));
