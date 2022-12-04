@@ -103,16 +103,82 @@ const char *tokenLexeme(Token *t) {
 int *tokenInfixBp(Token *t) {
   int *ret = malloc(2 * sizeof(int));
   switch (t->type) {
-    case TT_PLUS:
-    case TT_MINUS: {
+    case TT_COMMA: {
        ret[0] = 1;
        ret[1] = 2;
        break;
     }
+    case TT_EQ:
+    case TT_PLUS_EQ:
+    case TT_MINUS_EQ:
+    case TT_STAR_EQ:
+    case TT_SLASH_EQ:
+    case TT_PERCENT_EQ:
+    case TT_LESS_LESS_EQ:
+    case TT_GREATER_GREATER_EQ:
+    case TT_AMPER_EQ:
+    case TT_CARAT_EQ:
+    case TT_PIPE_EQ: {
+      ret[0] = 4;
+      ret[1] = 3;
+      break;
+    }
+    case TT_PIPE_PIPE: {
+      ret[0] = 5;
+      ret[1] = 6;
+      break;
+    }
+    case TT_AMPER_AMPER: {
+      ret[0] = 7;
+      ret[1] = 8;
+      break;
+    }
+    case TT_PIPE: {
+      ret[0] = 9;
+      ret[1] = 10;
+      break;
+    }
+    case TT_CARAT: {
+      ret[0] = 11;
+      ret[1] = 12;
+      break;
+    }
+    case TT_AMPER: {
+      ret[0] = 13;
+      ret[1] = 14;
+      break;
+    }
+    case TT_EQ_EQ:
+    case TT_BANG_EQ: {
+      ret[0] = 15;
+      ret[1] = 16;
+      break;
+    }
+    case TT_LESS:
+    case TT_LESS_EQ:
+    case TT_GREATER:
+    case TT_GREATER_EQ: {
+      ret[0] = 17;
+      ret[1] = 18;
+      break;
+    }
+    case TT_LESS_LESS:
+    case TT_GREATER_GREATER: {
+      ret[0] = 19;
+      ret[1] = 20;
+      break;
+    }
+    case TT_PLUS:
+    case TT_MINUS: {
+      ret[0] = 21;
+      ret[1] = 22;
+      break;
+    }
     case TT_STAR:
-    case TT_SLASH: {
-      ret[0] = 3;
-      ret[1] = 4;
+    case TT_SLASH:
+    case TT_PERCENT: {
+      ret[0] = 23;
+      ret[1] = 24;
       break;
     }
     default: return NULL;

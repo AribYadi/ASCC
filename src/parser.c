@@ -104,10 +104,36 @@ char *parseExpr(Lexer *lexer, Expr *buf, int bp) {
   while (1) {
     Token op = lexerPeek(lexer);
     switch (op.type) {
+      case TT_COMMA:
+      case TT_EQ:
+      case TT_PLUS_EQ:
+      case TT_MINUS_EQ:
+      case TT_STAR_EQ:
+      case TT_SLASH_EQ:
+      case TT_PERCENT_EQ:
+      case TT_LESS_LESS_EQ:
+      case TT_GREATER_GREATER_EQ:
+      case TT_AMPER_EQ:
+      case TT_CARAT_EQ:
+      case TT_PIPE_EQ:
+      case TT_PIPE_PIPE:
+      case TT_AMPER_AMPER:
+      case TT_PIPE:
+      case TT_CARAT:
+      case TT_AMPER:
+      case TT_EQ_EQ:
+      case TT_BANG_EQ:
+      case TT_LESS:
+      case TT_LESS_EQ:
+      case TT_GREATER:
+      case TT_GREATER_EQ:
+      case TT_LESS_LESS:
+      case TT_GREATER_GREATER:
       case TT_PLUS:
       case TT_MINUS:
       case TT_STAR:
       case TT_SLASH:
+      case TT_PERCENT:
         break;
       case TT_EOF:
       case TT_RPAREN:
