@@ -9,6 +9,7 @@ typedef enum {
   EXPR_CHAR,
   EXPR_UNARY,
   EXPR_BINARY,
+  EXPR_CALL,
 } ExprType;
 
 typedef struct {
@@ -31,12 +32,18 @@ typedef struct {
   Token op;
 } ExprBinary;
 
+typedef struct {
+  void *callee;
+  void *params;
+} ExprCall;
+
 typedef union {
   size_t intv;
   ExprStr str;
   char charv;
   ExprUnary unary;
   ExprBinary binary;
+  ExprCall call;
 } ExprValue;
 
 typedef struct {

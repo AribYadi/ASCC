@@ -7,11 +7,11 @@
 void exprPrint(Expr *expr) {
   const char *indent = getPrettyIndent();
 
-  printf("Expr {\n%s  type: '", indent);
+  printf("Expr {\n%s    type: '", indent);
   switch (expr->type) {
-    case EXPR_INT: printf("EXPR_INT',\n%s  value: '%zu'", indent, expr->value.intv); break;
-    case EXPR_STR: printf("EXPR_STR',\n%s  value: '%.*s'", indent, expr->value.str.len, expr->value.str.str); break;
-    case EXPR_CHAR: printf("EXPR_CHAR',\n%s  value: '%c'", indent, expr->value.charv); break;
+    case EXPR_INT: printf("EXPR_INT',\n%s    value: '%zu'", indent, expr->value.intv); break;
+    case EXPR_STR: printf("EXPR_STR',\n%s    value: '%.*s'", indent, expr->value.str.len, expr->value.str.str); break;
+    case EXPR_CHAR: printf("EXPR_CHAR',\n%s    value: '%c'", indent, expr->value.charv); break;
     case EXPR_UNARY: {
       ++indentSize;
       char *pos;
@@ -19,21 +19,30 @@ void exprPrint(Expr *expr) {
         case POS_PREFIX: pos = "POS_PREFIX"; break;
         case POS_POSTFIX: pos = "POS_POSTFIX"; break;
       }
-      printf("EXPR_UNARY',\n%s  position: '%s',\n%s  opr: ", indent, pos, indent);
+      printf("EXPR_UNARY',\n%s    position: '%s',\n%s    opr: ", indent, pos, indent);
       exprPrint(expr->value.unary.opr);
-      printf(",\n%s  op: ", indent);
+      printf(",\n%s    op: ", indent);
       tokenPrint(&expr->value.unary.op);
       --indentSize;
       break;
     }
     case EXPR_BINARY: {
       ++indentSize;
-      printf("EXPR_BINARY',\n%s  lhs: ", indent);
+      printf("EXPR_BINARY',\n%s    lhs: ", indent);
       exprPrint(expr->value.binary.lhs);
-      printf(",\n%s  rhs: ", indent);
+      printf(",\n%s    rhs: ", indent);
       exprPrint(expr->value.binary.rhs);
-      printf(",\n%s  op: ", indent);
+      printf(",\n%s    op: ", indent);
       tokenPrint(&expr->value.binary.op);
+      --indentSize;
+      break;
+    }
+    case EXPR_CALL: {
+      ++indentSize;
+      printf("EXPR_CALL',\n%s    callee: ", indent);
+      exprPrint(expr->value.call.callee);
+      printf(",\n%s    params: ", indent);
+      exprVecPrint((ExprVec *)expr->value.call.params);
       --indentSize;
       break;
     }
@@ -58,15 +67,17 @@ void exprVecPush(ExprVec *exprVec, Expr value) {
 void exprVecPrint(ExprVec *exprVec) {
   const char *indent = getPrettyIndent();
 
-  printf("ExprVec [\n");
-  ++indentSize;
-  for (int i = 0; i < exprVec->len; ++i) {
-    printf("%s  ", indent);
-    exprPrint(exprVec->raw + i);
-    printf("\n");
-  }
-  --indentSize;
-  printf("]");
+  if (exprVec->len > 0) {
+    printf("ExprVec [\n");
+    ++indentSize;
+    for (int i = 0; i < exprVec->len; ++i) {
+      printf("%s    ", indent);
+      exprPrint(exprVec->raw + i);
+      printf(",\n");
+    }
+    --indentSize;
+    printf("%s]", indent);
+  } else printf("ExprVec []");
 }
 
 Expr exprVecPop(ExprVec *exprVec) {
@@ -137,7 +148,6 @@ char *parseExpr(Lexer *lexer, Expr *buf, int bp) {
   while (1) {
     Token op = lexerPeek(lexer);
     switch (op.type) {
-      case TT_COMMA:
       case TT_EQ:
       case TT_PLUS_EQ:
       case TT_MINUS_EQ:
@@ -169,9 +179,11 @@ char *parseExpr(Lexer *lexer, Expr *buf, int bp) {
       case TT_PERCENT:
       case TT_PLUS_PLUS:
       case TT_MINUS_MINUS:
+      case TT_LPAREN:
         break;
       case TT_EOF:
       case TT_RPAREN:
+      case TT_COMMA:
         goto end;
         break;
       default: {
@@ -179,6 +191,40 @@ char *parseExpr(Lexer *lexer, Expr *buf, int bp) {
         snprintf(err, 512, "'%s' is not an operator!", tokenType(&t));
         return err;
       }
+    }
+
+    if (op.type == TT_LPAREN) {
+      lexerNext(lexer);
+
+      Expr callee = expr;
+      ExprVec params = exprVecNew();
+
+      Token t = lexerPeek(lexer);
+      while (t.type != TT_RPAREN && t.type != TT_EOF) {
+        Expr param;
+        char *err = parseExpr(lexer, &param, 0);
+        if (err) return err;
+
+        exprVecPush(&params, param);
+
+        t = lexerPeek(lexer);
+        if (t.type != TT_COMMA) break;
+        lexerNext(lexer);
+      }
+      t = lexerNext(lexer);
+      if (t.type != TT_RPAREN) {
+        char *err = malloc(512 * sizeof(char));
+        snprintf(err, 512, "Expected 'TT_RPAREN' instead found '%s'!", tokenType(&t));
+        return err;
+      }
+
+      expr.type = EXPR_CALL;
+      expr.value.call.callee = malloc(sizeof(Expr));
+      *(Expr *)expr.value.call.callee = callee;
+      expr.value.call.params = malloc(sizeof(ExprVec));
+      *(ExprVec *)expr.value.call.params = params;
+
+      continue;
     }
 
     int lbp = tokenPostfixBp(&op);
