@@ -43,9 +43,10 @@ const char *tokenType(Token *t) {
     case TT_VOID_TYPE: return "TT_VOID_TYPE";
     case TT_VOLATILE: return "TT_VOLATILE";
     case TT_WHILE: return "TT_WHILE";
-    case TT_STR: return "TT_STR";
     case TT_INT: return "TT_INT";
+    case TT_STR: return "TT_STR";
     case TT_CHAR: return "TT_CHAR";
+    case TT_IDENT: return "TT_IDENT";
     case TT_PLUS: return "TT_PLUS";
     case TT_PLUS_EQ: return "TT_PLUS_EQ";
     case TT_MINUS: return "TT_MINUS";
@@ -245,6 +246,16 @@ TokenType lexChar(Lexer *lexer) {
   return TT_CHAR;
 }
 
+TokenType lexIdent(Lexer *lexer) {
+  while (
+    (lexer->curr[0] >= 'a' && lexer->curr[0] <= 'z')
+      || (lexer->curr[0] >= 'A' && lexer->curr[0] <= 'Z')
+      || (lexer->curr[0] >= '0' && lexer->curr[0] <= '9')
+      || lexer->curr[0] == '_'
+  ) ++lexer->curr;
+  return TT_IDENT;
+}
+
 int testKeyword(Lexer *lexer, const char *keyword, int len) {
   if (strncmp(lexer->start, keyword, len) != 0) return 0;
   lexer->curr += len - 1;
@@ -295,6 +306,7 @@ Token lexerNext(Lexer *lexer) {
   else if (lexer->start[0] == '"') t.type = lexStr(lexer);
   else if (lexer->start[0] >= '0' && lexer->start[0] <= '9') t.type = lexInt(lexer);
   else if (lexer->start[0] == '\'') t.type = lexChar(lexer);
+  else if ((lexer->start[0] >= 'a' && lexer->start[0] <= 'z') || (lexer->start[0] >= 'A' && lexer->start[0] <= 'Z') || lexer->start[0] == '_') t.type = lexIdent(lexer);
   else if (!strncmp(lexer->start, "+=", len+1)) { ++lexer->curr; t.type = TT_PLUS_EQ; }
   else if (!strncmp(lexer->start, "++", len+1)) { ++lexer->curr; t.type = TT_PLUS_PLUS; }
   else if (!strncmp(lexer->start, "+", len)) t.type = TT_PLUS;

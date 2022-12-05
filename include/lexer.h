@@ -45,6 +45,7 @@ typedef enum {
   TT_INT,
   TT_STR,
   TT_CHAR,
+  TT_IDENT,
 
   TT_PLUS,
   TT_PLUS_EQ,

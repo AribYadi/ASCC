@@ -2,6 +2,11 @@
   "files.associations": {
     "*.pyr": "pyrlang",
     "stdio.h": "c",
-    "parser.h": "c"
+    "parser.h": "c",
+    "cstdlib": "c",
+    "memory_resource": "c",
+    "type_traits": "c",
+    "typeinfo": "c",
+    "version": "c"
   }
 }

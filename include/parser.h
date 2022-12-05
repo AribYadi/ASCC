@@ -7,6 +7,7 @@ typedef enum {
   EXPR_INT,
   EXPR_STR,
   EXPR_CHAR,
+  EXPR_IDENT,
   EXPR_UNARY,
   EXPR_BINARY,
   EXPR_CALL,
@@ -41,6 +42,7 @@ typedef union {
   size_t intv;
   ExprStr str;
   char charv;
+  ExprStr ident;
   ExprUnary unary;
   ExprBinary binary;
   ExprCall call;

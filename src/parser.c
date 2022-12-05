@@ -6,8 +6,8 @@
 
 #define ERR(str, ...)                                                              \
   do {                                                                             \
-    char *err = malloc(1024 * sizeof(char));                                        \
-    snprintf(err, 1024, str, ##__VA_ARGS__); \
+    char *err = malloc(1024 * sizeof(char));                                       \
+    snprintf(err, 1024, str, ##__VA_ARGS__);                                       \
     return err;                                                                    \
   } while (0);
 
@@ -22,6 +22,7 @@ void exprPrint(Expr *expr) {
     case EXPR_INT: printf("EXPR_INT',\n%svalue: '%zu'", indentx, expr->value.intv); break;
     case EXPR_STR: printf("EXPR_STR',\n%svalue: '%.*s'", indentx, expr->value.str.len, expr->value.str.str); break;
     case EXPR_CHAR: printf("EXPR_CHAR',\n%svalue: '%c'", indentx, expr->value.charv); break;
+    case EXPR_IDENT: printf("EXPR_IDENT',\n%svalue: '%.*s'", indentx, expr->value.ident.len, expr->value.ident.str); break;
     case EXPR_UNARY: {
       ++indentSize;
       char *pos;
@@ -65,6 +66,7 @@ void exprFree(Expr expr) {
     case EXPR_INT:
     case EXPR_STR:
     case EXPR_CHAR:
+    case EXPR_IDENT:
       break;
     case EXPR_UNARY: {
       exprFree(*(Expr *)expr.value.unary.opr);
@@ -217,6 +219,12 @@ char *parseExpr(Lexer *lexer, Expr *buf, int bp) {
       expr.type = EXPR_STR;
       expr.value.str.str = t.lexeme + 1;
       expr.value.str.len = t.lexemeLen - 1;
+      break;
+    }
+    case TT_IDENT: {
+      expr.type = EXPR_IDENT;
+      expr.value.ident.str = t.lexeme;
+      expr.value.ident.len = t.lexemeLen;
       break;
     }
     case TT_CHAR: {
