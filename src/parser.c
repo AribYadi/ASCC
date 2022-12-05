@@ -241,6 +241,7 @@ char *parseExpr(Lexer *lexer, Expr *buf, int bp) {
       if (err) return err;
       Token t = lexerNext(lexer);
       if (t.type != TT_RPAREN) {
+        exprFree(expr);
         char *err = malloc(512 * sizeof(char));
         snprintf(err, 512, "Expected 'TT_RPAREN' instead found '%s'!", tokenType(&t));
         return err;
@@ -297,6 +298,7 @@ char *parseExpr(Lexer *lexer, Expr *buf, int bp) {
         goto end;
         break;
       default: {
+        exprFree(expr);
         char *err = malloc(512 * sizeof(char));
         snprintf(err, 512, "'%s' is not an operator!", tokenType(&t));
         return err;
@@ -313,7 +315,11 @@ char *parseExpr(Lexer *lexer, Expr *buf, int bp) {
       while (t.type != TT_RPAREN && t.type != TT_EOF) {
         Expr param;
         char *err = parseExpr(lexer, &param, 0);
-        if (err) return err;
+        if (err) {
+          exprFree(expr);
+          exprVecFree(params);
+          return err;
+        }
 
         exprVecPush(&params, param);
 
@@ -323,6 +329,8 @@ char *parseExpr(Lexer *lexer, Expr *buf, int bp) {
       }
       t = lexerNext(lexer);
       if (t.type != TT_RPAREN) {
+        exprFree(expr);
+        exprVecFree(params);
         char *err = malloc(512 * sizeof(char));
         snprintf(err, 512, "Expected 'TT_RPAREN' instead found '%s'!", tokenType(&t));
         return err;
@@ -359,7 +367,10 @@ char *parseExpr(Lexer *lexer, Expr *buf, int bp) {
 
     Expr rhs;
     char *err = parseExpr(lexer, &rhs, op_bp[1]);
-    if (err) return err;
+    if (err) {
+      exprFree(expr);
+      return err;
+    }
 
     Expr lhs = expr;
 
