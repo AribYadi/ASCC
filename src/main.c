@@ -21,10 +21,10 @@ int main(int argc, char **argv) {
   char *src = readFile(argv[1]);
 
   if (src) {
-    ExprVec exprs = parse(src);
-    exprVecPrint(&exprs);
+    StmtVec stmts = parse(src);
+    stmtVecPrint(&stmts);
     printf("\n");
-    exprVecFree(exprs);
+    stmtVecFree(stmts);
 
     free(src);
   }

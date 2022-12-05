@@ -66,6 +66,34 @@ void exprVecPrint(ExprVec *exprVec);
 Expr exprVecPop(ExprVec *exprVec);
 void exprVecFree(ExprVec exprVec);
 
-ExprVec parse(char *src);
+typedef enum {
+  STMT_EXPR
+} StmtType;
+
+typedef union {
+  Expr expr;
+} StmtValue;
+
+typedef struct {
+  StmtType type;
+  StmtValue value;
+} Stmt;
+
+void stmtPrint(Stmt *stmt);
+void stmtFree(Stmt stmt);
+
+typedef struct {
+  Stmt *raw;
+  size_t len;
+  size_t cap;
+} StmtVec;
+
+StmtVec stmtVecNew();
+void stmtVecPush(StmtVec *stmtVec, Stmt value);
+void stmtVecPrint(StmtVec *stmtVec);
+Stmt stmtVecPop(StmtVec *stmtVec);
+void stmtVecFree(StmtVec stmtVec);
+
+StmtVec parse(char *src);
 
 #endif

@@ -201,7 +201,7 @@ int tokenPostfixBp(Token *t) {
     case TT_PLUS_PLUS:
     case TT_MINUS_MINUS:
       return 26;
-    default: return 0;
+    default: return -1;
   }
 }
 

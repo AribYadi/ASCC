@@ -126,6 +126,77 @@ void exprVecFree(ExprVec exprVec) {
   free(exprVec.raw);
 }
 
+void stmtPrint(Stmt *stmt) {
+  const char *indent = getPrettyIndent();
+  ++indentSize;
+  const char *indentx = getPrettyIndent();
+  --indentSize;
+
+  printf("Stmt {\n%stype: '", indentx);
+  switch (stmt->type) {
+    case STMT_EXPR: {
+      ++indentSize;
+      printf("STMT_EXPR',\n%svalue: ", indentx);
+      exprPrint(&stmt->value.expr);
+      --indentSize;
+      break;
+    }
+  }
+
+  printf("\n%s}", indent);
+}
+
+void stmtFree(Stmt stmt) {
+  switch (stmt.type) {
+    case STMT_EXPR: exprFree(stmt.value.expr); break;
+  }
+}
+
+StmtVec stmtVecNew() {
+  StmtVec stmtVec = {.raw = malloc(4 * sizeof(Stmt)), .len = 0, .cap = 4};
+  return stmtVec;
+}
+
+void stmtVecPush(StmtVec *stmtVec, Stmt value) {
+  if (stmtVec->cap <= stmtVec->len) {
+    stmtVec->cap *= 2;
+    stmtVec->raw = realloc(stmtVec->raw, stmtVec->cap * sizeof(Stmt));
+    if (!stmtVec->raw) exit(1);
+  }
+  stmtVec->raw[stmtVec->len++] = value;
+}
+
+void stmtVecPrint(StmtVec *stmtVec) {
+  const char *indent = getPrettyIndent();
+  ++indentSize;
+  const char *indentx = getPrettyIndent();
+  --indentSize;
+
+  if (stmtVec->len > 0) {
+    printf("StmtVec [\n");
+    ++indentSize;
+    for (int i = 0; i < stmtVec->len; ++i) {
+      printf("%s", indentx);
+      stmtPrint(stmtVec->raw + i);
+      printf(",\n");
+    }
+    --indentSize;
+    printf("%s]", indent);
+  } else printf("StmtVec []");
+}
+
+Stmt stmtVecPop(StmtVec *stmtVec) {
+  return stmtVec->raw[--stmtVec->len];
+}
+
+void stmtVecFree(StmtVec stmtVec) {
+  while (stmtVec.len > 0) {
+    Stmt stmt = stmtVecPop(&stmtVec);
+    stmtFree(stmt);
+  }
+  free(stmtVec.raw);
+}
+
 char *parseExpr(Lexer *lexer, Expr *buf, int bp) {
   Expr expr;
   Token t = lexerNext(lexer);
@@ -222,6 +293,7 @@ char *parseExpr(Lexer *lexer, Expr *buf, int bp) {
       case TT_EOF:
       case TT_RPAREN:
       case TT_COMMA:
+      case TT_SEMICOLON:
         goto end;
         break;
       default: {
@@ -304,14 +376,32 @@ end:
   return NULL;
 }
 
-ExprVec parse(char *src) {
-  ExprVec exprs = exprVecNew();
+char *parseStmt(Lexer *lexer, Stmt *buf) {
+  Stmt stmt;
+
+  stmt.type = STMT_EXPR;
+  char *err = parseExpr(lexer, &stmt.value.expr, 0);
+  if (err) return err;
+
+  Token t = lexerNext(lexer);
+  if (t.type != TT_SEMICOLON) {
+    char *err = malloc(512 * sizeof(char));
+    snprintf(err, 512, "Expected 'TT_SEMICOLON' instead found '%s'!", tokenType(&t));
+    return err;
+  }
+
+  *buf = stmt;
+  return NULL;
+}
+
+StmtVec parse(char *src) {
+  StmtVec stmts = stmtVecNew();
   Lexer lexer = lexerNew(src);
 
   while (lexerPeek(&lexer).type != TT_EOF) {
-    Expr expr;
-    char *err = parseExpr(&lexer, &expr, 0);
-    if (!err) exprVecPush(&exprs, expr);
+    Stmt stmt;
+    char *err = parseStmt(&lexer, &stmt);
+    if (!err) stmtVecPush(&stmts, stmt);
     else {
       fprintf(stderr, "%s\n", err);
       free(err);
@@ -319,5 +409,5 @@ ExprVec parse(char *src) {
     }
   }
 
-  return exprs;
+  return stmts;
 }
