@@ -52,6 +52,7 @@ typedef struct {
 } Expr;
 
 void exprPrint(Expr *expr);
+void exprFree(Expr expr);
 
 typedef struct {
   Expr *raw;
@@ -63,7 +64,7 @@ ExprVec exprVecNew();
 void exprVecPush(ExprVec *exprVec, Expr value);
 void exprVecPrint(ExprVec *exprVec);
 Expr exprVecPop(ExprVec *exprVec);
-void exprVecFree(ExprVec *exprVec);
+void exprVecFree(ExprVec exprVec);
 
 ExprVec parse(char *src);
 

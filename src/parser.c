@@ -53,6 +53,34 @@ void exprPrint(Expr *expr) {
   printf("\n%s}", indent);
 }
 
+void exprFree(Expr expr) {
+  switch (expr.type) {
+    case EXPR_INT:
+    case EXPR_STR:
+    case EXPR_CHAR:
+      break;
+    case EXPR_UNARY: {
+      exprFree(*(Expr *)expr.value.unary.opr);
+      free(expr.value.unary.opr);
+      break;
+    }
+    case EXPR_BINARY: {
+      exprFree(*(Expr *)expr.value.binary.lhs);
+      free(expr.value.binary.lhs);
+      exprFree(*(Expr *)expr.value.binary.rhs);
+      free(expr.value.binary.rhs);
+      break;
+    }
+    case EXPR_CALL: {
+      exprFree(*(Expr *)expr.value.call.callee);
+      free(expr.value.call.callee);
+      exprVecFree(*(ExprVec *)expr.value.call.params);
+      free(expr.value.call.params);
+      break;
+    }
+  }
+}
+
 ExprVec exprVecNew() {
   ExprVec exprVec = {.raw = malloc(4 * sizeof(Expr)), .len = 0, .cap = 4};
   return exprVec;
@@ -90,8 +118,12 @@ Expr exprVecPop(ExprVec *exprVec) {
   return exprVec->raw[--exprVec->len];
 }
 
-void exprVecFree(ExprVec *exprVec) {
-  free(exprVec->raw);
+void exprVecFree(ExprVec exprVec) {
+  while (exprVec.len > 0) {
+    Expr expr = exprVecPop(&exprVec);
+    exprFree(expr);
+  }
+  free(exprVec.raw);
 }
 
 char *parseExpr(Lexer *lexer, Expr *buf, int bp) {

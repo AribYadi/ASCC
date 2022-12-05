@@ -24,7 +24,7 @@ int main(int argc, char **argv) {
     ExprVec exprs = parse(src);
     exprVecPrint(&exprs);
     printf("\n");
-    exprVecFree(&exprs);
+    exprVecFree(exprs);
 
     free(src);
   }
