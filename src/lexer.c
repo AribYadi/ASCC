@@ -207,8 +207,11 @@ int tokenPostfixBp(Token *t) {
 
 void tokenPrint(Token *t) {
   const char *indent = getPrettyIndent();
+  ++indentSize;
+  const char *indentx = getPrettyIndent();
+  --indentSize;
 
-  printf("Token {\n%s    type: '%s',\n%s    lexeme: '%.*s'\n%s}", indent, tokenType(t), indent, t->lexemeLen, t->lexeme, indent); 
+  printf("Token {\n%stype: '%s',\n%slexeme: '%.*s'\n%s}", indentx, tokenType(t), indentx, t->lexemeLen, t->lexeme, indent); 
 }
 
 Lexer lexerNew(char *src) {

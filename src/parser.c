@@ -6,12 +6,15 @@
 
 void exprPrint(Expr *expr) {
   const char *indent = getPrettyIndent();
+  ++indentSize;
+  const char *indentx = getPrettyIndent();
+  --indentSize;
 
-  printf("Expr {\n%s    type: '", indent);
+  printf("Expr {\n%stype: '", indentx);
   switch (expr->type) {
-    case EXPR_INT: printf("EXPR_INT',\n%s    value: '%zu'", indent, expr->value.intv); break;
-    case EXPR_STR: printf("EXPR_STR',\n%s    value: '%.*s'", indent, expr->value.str.len, expr->value.str.str); break;
-    case EXPR_CHAR: printf("EXPR_CHAR',\n%s    value: '%c'", indent, expr->value.charv); break;
+    case EXPR_INT: printf("EXPR_INT',\n%svalue: '%zu'", indentx, expr->value.intv); break;
+    case EXPR_STR: printf("EXPR_STR',\n%svalue: '%.*s'", indentx, expr->value.str.len, expr->value.str.str); break;
+    case EXPR_CHAR: printf("EXPR_CHAR',\n%svalue: '%c'", indentx, expr->value.charv); break;
     case EXPR_UNARY: {
       ++indentSize;
       char *pos;
@@ -19,29 +22,29 @@ void exprPrint(Expr *expr) {
         case POS_PREFIX: pos = "POS_PREFIX"; break;
         case POS_POSTFIX: pos = "POS_POSTFIX"; break;
       }
-      printf("EXPR_UNARY',\n%s    position: '%s',\n%s    opr: ", indent, pos, indent);
+      printf("EXPR_UNARY',\n%sposition: '%s',\n%sopr: ", indentx, pos, indentx);
       exprPrint(expr->value.unary.opr);
-      printf(",\n%s    op: ", indent);
+      printf(",\n%sop: ", indentx);
       tokenPrint(&expr->value.unary.op);
       --indentSize;
       break;
     }
     case EXPR_BINARY: {
       ++indentSize;
-      printf("EXPR_BINARY',\n%s    lhs: ", indent);
+      printf("EXPR_BINARY',\n%slhs: ", indentx);
       exprPrint(expr->value.binary.lhs);
-      printf(",\n%s    rhs: ", indent);
+      printf(",\n%srhs: ", indentx);
       exprPrint(expr->value.binary.rhs);
-      printf(",\n%s    op: ", indent);
+      printf(",\n%sop: ", indentx);
       tokenPrint(&expr->value.binary.op);
       --indentSize;
       break;
     }
     case EXPR_CALL: {
       ++indentSize;
-      printf("EXPR_CALL',\n%s    callee: ", indent);
+      printf("EXPR_CALL',\n%scallee: ", indentx);
       exprPrint(expr->value.call.callee);
-      printf(",\n%s    params: ", indent);
+      printf(",\n%sparams: ", indentx);
       exprVecPrint((ExprVec *)expr->value.call.params);
       --indentSize;
       break;
@@ -66,12 +69,15 @@ void exprVecPush(ExprVec *exprVec, Expr value) {
 
 void exprVecPrint(ExprVec *exprVec) {
   const char *indent = getPrettyIndent();
+  ++indentSize;
+  const char *indentx = getPrettyIndent();
+  --indentSize;
 
   if (exprVec->len > 0) {
     printf("ExprVec [\n");
     ++indentSize;
     for (int i = 0; i < exprVec->len; ++i) {
-      printf("%s    ", indent);
+      printf("%s", indentx);
       exprPrint(exprVec->raw + i);
       printf(",\n");
     }
