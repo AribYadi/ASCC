@@ -4,6 +4,13 @@
 #include "parser.h"
 #include "globals.h"
 
+#define ERR(str, ...)                                                              \
+  do {                                                                             \
+    char *err = malloc(1024 * sizeof(char));                                        \
+    snprintf(err, 1024, str, ##__VA_ARGS__); \
+    return err;                                                                    \
+  } while (0);
+
 void exprPrint(Expr *expr) {
   const char *indent = getPrettyIndent();
   ++indentSize;
@@ -242,17 +249,11 @@ char *parseExpr(Lexer *lexer, Expr *buf, int bp) {
       Token t = lexerNext(lexer);
       if (t.type != TT_RPAREN) {
         exprFree(expr);
-        char *err = malloc(512 * sizeof(char));
-        snprintf(err, 512, "Expected 'TT_RPAREN' instead found '%s'!", tokenType(&t));
-        return err;
+        ERR("Expected 'TT_RPAREN' instead found '%s'!", tokenType(&t));
       }
       break;
     }
-    default: {
-      char *err = malloc(512 * sizeof(char));
-      snprintf(err, 512, "No expression starts with '%s'!", tokenType(&t));
-      return err;
-    }
+    default: ERR("No expression starts with '%s'!", tokenType(&t));
   }
 
   while (1) {
@@ -299,9 +300,7 @@ char *parseExpr(Lexer *lexer, Expr *buf, int bp) {
         break;
       default: {
         exprFree(expr);
-        char *err = malloc(512 * sizeof(char));
-        snprintf(err, 512, "'%s' is not an operator!", tokenType(&t));
-        return err;
+        ERR("'%s' is not an operator!", tokenType(&t));
       }
     }
 
@@ -331,9 +330,7 @@ char *parseExpr(Lexer *lexer, Expr *buf, int bp) {
       if (t.type != TT_RPAREN) {
         exprFree(expr);
         exprVecFree(params);
-        char *err = malloc(512 * sizeof(char));
-        snprintf(err, 512, "Expected 'TT_RPAREN' instead found '%s'!", tokenType(&t));
-        return err;
+        ERR("Expected 'TT_RPAREN' instead found '%s'!", tokenType(&t));
       }
 
       expr.type = EXPR_CALL;
@@ -396,9 +393,8 @@ char *parseStmt(Lexer *lexer, Stmt *buf) {
 
   Token t = lexerNext(lexer);
   if (t.type != TT_SEMICOLON) {
-    char *err = malloc(512 * sizeof(char));
-    snprintf(err, 512, "Expected 'TT_SEMICOLON' instead found '%s'!", tokenType(&t));
-    return err;
+    stmtFree(stmt);
+    ERR("Expected 'TT_SEMICOLON' instead found '%s'!", tokenType(&t));
   }
 
   *buf = stmt;
