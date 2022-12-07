@@ -69,11 +69,20 @@ Expr exprVecPop(ExprVec *exprVec);
 void exprVecFree(ExprVec exprVec);
 
 typedef enum {
-  STMT_EXPR
+  STMT_EXPR,
+  STMT_VARIABLE,
 } StmtType;
+
+typedef struct {
+  Token type;
+  char *name;
+  int nameLen;
+  Expr *value;
+} StmtVariable;
 
 typedef union {
   Expr expr;
+  StmtVariable var;
 } StmtValue;
 
 typedef struct {

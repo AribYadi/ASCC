@@ -150,6 +150,18 @@ void stmtPrint(Stmt *stmt) {
       --indentSize;
       break;
     }
+    case STMT_VARIABLE: {
+      ++indentSize;
+      printf("STMT_VARIABLE',\n%stype: ", indentx);
+      tokenPrint(&stmt->value.var.type);
+      printf(",\n%sname: '%.*s'", indentx, stmt->value.var.nameLen, stmt->value.var.name);
+      if (stmt->value.var.value) {
+        printf(",\n%svalue: ", indentx);
+        exprPrint(stmt->value.var.value);
+      }
+      --indentSize;
+      break;
+    }
   }
 
   printf("\n%s}", indent);
@@ -158,6 +170,10 @@ void stmtPrint(Stmt *stmt) {
 void stmtFree(Stmt stmt) {
   switch (stmt.type) {
     case STMT_EXPR: exprFree(stmt.value.expr); break;
+    case STMT_VARIABLE: {
+      if (stmt.value.var.value) exprFree(*stmt.value.var.value);
+      break;
+    }
   }
 }
 
@@ -395,9 +411,52 @@ end:
 char *parseStmt(Lexer *lexer, Stmt *buf) {
   Stmt stmt;
 
-  stmt.type = STMT_EXPR;
-  char *err = parseExpr(lexer, &stmt.value.expr, 0);
-  if (err) return err;
+  switch (lexerPeek(lexer).type) {
+    case TT_INT_TYPE:
+    case TT_CHAR_TYPE:
+    case TT_FLOAT_TYPE:
+    case TT_DOUBLE_TYPE:
+    case TT_VOID_TYPE:
+    case TT_IDENT: {
+      Token type = lexerNext(lexer);
+      if (lexerPeek(lexer).type == TT_IDENT) {
+        Token t = lexerNext(lexer);
+        stmt.type = STMT_VARIABLE;
+        stmt.value.var.type = type;
+        stmt.value.var.name = t.lexeme;
+        stmt.value.var.nameLen = t.lexemeLen;
+        switch (lexerPeek(lexer).type) {
+          case TT_SEMICOLON: stmt.value.var.value = NULL; break;
+          case TT_EQ: {
+            lexerNext(lexer);
+
+            Expr value;
+            char *err = parseExpr(lexer, &value, 0);
+            if (err) {
+              stmtFree(stmt);
+              return err;
+            }
+            stmt.value.var.value = malloc(sizeof(Expr));
+            *stmt.value.var.value = value;
+
+            break;
+          }
+          default: {
+            stmtFree(stmt);
+            ERR("Expected 'TT_SEMICOLON' or 'TT_EQ' instead found '%s'!", tokenType(&t));
+          }
+        }
+      }
+      break;
+    }
+    default: {
+      stmt.type = STMT_EXPR;
+      char *err = parseExpr(lexer, &stmt.value.expr, 0);
+      if (err) return err;
+
+      break;
+    }
+  }
 
   Token t = lexerNext(lexer);
   if (t.type != TT_SEMICOLON) {
