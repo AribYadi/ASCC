@@ -187,7 +187,7 @@ void stmtPrint(Stmt *stmt) {
     }
     case STMT_FUNCTION_DECL: {
       ++indentSize;
-      printf("STMT_VARIABLE_DECL',\n%sreturnType: ", indentx);
+      printf("STMT_FUNCTION_DECL',\n%sreturnType: ", indentx);
       typePrint(&stmt->value.funcDecl.returnType);
       printf(",\n%sname: '%.*s',\n%sparams: [", indentx, stmt->value.funcDecl.nameLen, stmt->value.funcDecl.name, indentx);
 
@@ -206,6 +206,13 @@ void stmtPrint(Stmt *stmt) {
       indentSize -= 2;
       if (stmt->value.funcDecl.paramsCount > 0) printf("\n%s", indentx);
       printf("]");
+      --indentSize;
+      break;
+    }
+    case STMT_LABEL: {
+      ++indentSize;
+      printf("STMT_LABEL',\n%slabel: ", indentx);
+      tokenPrint(&stmt->value.label);
       --indentSize;
       break;
     }
@@ -228,6 +235,7 @@ void stmtFree(Stmt stmt) {
       free(stmt.value.funcDecl.paramsName);
       break;
     }
+    case STMT_LABEL: break;
   }
 }
 
@@ -288,7 +296,7 @@ char *parseExpr(Lexer *lexer, Expr *buf, int bp) {
     case TT_STR: {
       expr.type = EXPR_STR;
       expr.value.str.str = t.lexeme + 1;
-      expr.value.str.len = t.lexemeLen - 1;
+      expr.value.str.len = t.lexemeLen - 2;
       break;
     }
     case TT_IDENT: {
@@ -457,7 +465,7 @@ char *parseExpr(Lexer *lexer, Expr *buf, int bp) {
     expr.value.binary.op = op;
   }
 
-end:
+end: {}
   *buf = expr;
   return NULL;
 }
@@ -496,6 +504,7 @@ char *parseType(Lexer *lexer, Type *buf) {
       type.type = TYPE_IDENT;
       type.value.ident.str = t.lexeme;
       type.value.ident.len = t.lexemeLen;
+      break;
     }
     default: {
       Token t = lexerNext(lexer);
@@ -517,6 +526,22 @@ char *parseType(Lexer *lexer, Type *buf) {
 
 char *parseStmt(Lexer *lexer, Stmt *buf) {
   Stmt stmt;
+
+  switch (lexerPeek(lexer).type) {
+    case TT_IDENT: {
+      if (lexerPeekMore(lexer).type == TT_COLON) {
+        stmt.type = STMT_LABEL;
+        stmt.value.label = lexerNext(lexer);
+        Token t = lexerNext(lexer);
+        goto end;
+      }
+      break;
+    }
+    default: break;
+  }
+
+  char *start = lexer->start;
+  char *curr = lexer->curr;
 
   Type type;
   char *err = parseType(lexer, &type);
@@ -601,23 +626,30 @@ char *parseStmt(Lexer *lexer, Stmt *buf) {
       default: {
         typeFree(type);
         stmtFree(stmt);
-        ERR("Expected 'TT_SEMICOLON' or 'TT_EQ' instead found '%s'!", tokenType(&t));
+        ERR("Expected 'TT_SEMICOLON', 'TT_EQ', or 'TT_LPAREN' instead found '%s'!", tokenType(&t));
       }
     }
+
+    goto semi;
   } else if (foundType) {
     typeFree(type);
-  } else {
-    stmt.type = STMT_EXPR;
-    char *err = parseExpr(lexer, &stmt.value.expr, 0);
-    if (err) return err;
   }
 
+  lexer->start = start;
+  lexer->curr = curr;
+
+  stmt.type = STMT_EXPR;
+  err = parseExpr(lexer, &stmt.value.expr, 0);
+  if (err) return err;
+
+semi: {}
   Token t = lexerNext(lexer);
   if (t.type != TT_SEMICOLON) {
     stmtFree(stmt);
     ERR("Expected 'TT_SEMICOLON' instead found '%s'!", tokenType(&t));
   }
 
+end: {}
   *buf = stmt;
   return NULL;
 }

@@ -91,6 +91,7 @@ const char *tokenType(Token *t) {
     case TT_ELLIPSIS: return "TT_ELLIPSIS";
     case TT_PLUS_PLUS: return "TT_PLUS_PLUS";
     case TT_MINUS_MINUS: return "TT_MINUS_MINUS";
+    case TT_COLON: return "TT_COLON";
   }
 }
 
@@ -351,6 +352,7 @@ Token lexerNext(Lexer *lexer) {
   else if (!strncmp(lexer->start, ",", len)) t.type = TT_COMMA;
   else if (!strncmp(lexer->start, "...", len+2)) { lexer->curr += 2; t.type = TT_ELLIPSIS; }
   else if (!strncmp(lexer->start, ".", len)) t.type = TT_DOT;
+  else if (!strncmp(lexer->start, ":", len)) t.type = TT_COLON;
   t.lexemeLen = lexer->curr - lexer->start;
 
   return t;
@@ -359,6 +361,16 @@ Token lexerNext(Lexer *lexer) {
 Token lexerPeek(Lexer *lexer) {
   char *start = lexer->start;
   char *curr = lexer->curr;
+  Token t = lexerNext(lexer);
+  lexer->start = start;
+  lexer->curr = curr;
+  return t;
+}
+
+Token lexerPeekMore(Lexer *lexer) {
+  char *start = lexer->start;
+  char *curr = lexer->curr;
+  lexerNext(lexer);
   Token t = lexerNext(lexer);
   lexer->start = start;
   lexer->curr = curr;

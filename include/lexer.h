@@ -92,6 +92,7 @@ typedef enum {
   TT_ELLIPSIS,
   TT_PLUS_PLUS,
   TT_MINUS_MINUS,
+  TT_COLON,
 } TokenType;
 
 typedef struct {
@@ -115,5 +116,6 @@ typedef struct {
 Lexer lexerNew(char *src);
 Token lexerNext(Lexer *lexer);
 Token lexerPeek(Lexer *lexer);
+Token lexerPeekMore(Lexer *lexer);
 
 #endif
