@@ -135,6 +135,29 @@ void exprVecFree(ExprVec exprVec) {
   free(exprVec.raw);
 }
 
+void typePrint(Type *type) {
+  switch (type->type) {
+    case TYPE_INT: printf("int"); break;
+    case TYPE_CHAR: printf("char"); break;
+    case TYPE_FLOAT: printf("float"); break;
+    case TYPE_DOUBLE: printf("double"); break;
+    case TYPE_VOID: printf("void"); break;
+    case TYPE_IDENT: printf("%.*s", type->value.ident.len, type->value.ident.str); break;
+    case TYPE_POINTER: {
+      typePrint(type->value.pointType);
+      printf("*");
+      break;
+    }
+  }
+}
+
+void typeFree(Type type) {
+  if (type.type == TYPE_POINTER) {
+    typeFree(*(Type *)type.value.pointType);
+    free(type.value.pointType);
+  }
+}
+
 void stmtPrint(Stmt *stmt) {
   const char *indent = getPrettyIndent();
   ++indentSize;
@@ -153,7 +176,7 @@ void stmtPrint(Stmt *stmt) {
     case STMT_VARIABLE_DECL: {
       ++indentSize;
       printf("STMT_VARIABLE_DECL',\n%svarType: ", indentx);
-      tokenPrint(&stmt->value.varDecl.type);
+      typePrint(&stmt->value.varDecl.type);
       printf(",\n%sname: '%.*s'", indentx, stmt->value.varDecl.nameLen, stmt->value.varDecl.name);
       if (stmt->value.varDecl.value) {
         printf(",\n%svalue: ", indentx);
@@ -165,22 +188,22 @@ void stmtPrint(Stmt *stmt) {
     case STMT_FUNCTION_DECL: {
       ++indentSize;
       printf("STMT_VARIABLE_DECL',\n%sreturnType: ", indentx);
-      tokenPrint(&stmt->value.funcDecl.returnType);
+      typePrint(&stmt->value.funcDecl.returnType);
       printf(",\n%sname: '%.*s',\n%sparams: [", indentx, stmt->value.funcDecl.nameLen, stmt->value.funcDecl.name, indentx);
 
       ++indentSize;
       const char *indentxx = getPrettyIndent();
       ++indentSize;
       const char *indentxxx = getPrettyIndent();
-      for (int i = 0; i < stmt->value.funcDecl.paramsCount / 2; ++i) {
+      for (int i = 0; i < stmt->value.funcDecl.paramsCount; ++i) {
         printf("\n%s{", indentxx);
         printf("\n%stype: ", indentxxx);
-        tokenPrint(stmt->value.funcDecl.params + i * 2);
+        typePrint(stmt->value.funcDecl.paramsType + i);
         printf("\n%sname: ", indentxxx);
-        tokenPrint(stmt->value.funcDecl.params + i * 2 + 1);
+        tokenPrint(stmt->value.funcDecl.paramsName + i);
         printf("\n%s},", indentxx);
       }
-        indentSize -= 2;
+      indentSize -= 2;
       if (stmt->value.funcDecl.paramsCount > 0) printf("\n%s", indentx);
       printf("]");
       --indentSize;
@@ -195,11 +218,14 @@ void stmtFree(Stmt stmt) {
   switch (stmt.type) {
     case STMT_EXPR: exprFree(stmt.value.expr); break;
     case STMT_VARIABLE_DECL: {
+      typeFree(stmt.value.varDecl.type);
       if (stmt.value.varDecl.value) exprFree(*stmt.value.varDecl.value);
       break;
     }
     case STMT_FUNCTION_DECL: {
-      free(stmt.value.funcDecl.params);
+      for (int i = 0; i < stmt.value.funcDecl.paramsCount; ++i) typeFree(stmt.value.funcDecl.paramsType[i]);
+      free(stmt.value.funcDecl.paramsType);
+      free(stmt.value.funcDecl.paramsName);
       break;
     }
   }
@@ -436,111 +462,154 @@ end:
   return NULL;
 }
 
+char *parseType(Lexer *lexer, Type *buf) {
+  Type type;
+
+  switch (lexerPeek(lexer).type) {
+    case TT_INT_TYPE: {
+      lexerNext(lexer);
+      type.type = TYPE_INT;
+      break;
+    }
+    case TT_CHAR_TYPE: {
+      lexerNext(lexer);
+      type.type = TYPE_CHAR;
+      break;
+    }
+    case TT_FLOAT_TYPE: {
+      lexerNext(lexer);
+      type.type = TYPE_FLOAT;
+      break;
+    }
+    case TT_DOUBLE_TYPE: {
+      lexerNext(lexer);
+      type.type = TYPE_DOUBLE;
+      break;
+    }
+    case TT_VOID_TYPE: {
+      lexerNext(lexer);
+      type.type = TYPE_VOID;
+      break;
+    }
+    case TT_IDENT: {
+      Token t = lexerNext(lexer);
+      type.type = TYPE_IDENT;
+      type.value.ident.str = t.lexeme;
+      type.value.ident.len = t.lexemeLen;
+    }
+    default: {
+      Token t = lexerNext(lexer);
+      ERR("Expected type but found '%s'!", tokenType(&t));
+    }
+  }
+
+  while (lexerPeek(lexer).type == TT_STAR) {
+    lexerNext(lexer);
+    Type pointType = type;
+    type.type = TYPE_POINTER;
+    type.value.pointType = malloc(sizeof(Type));
+    *(Type *)type.value.pointType = pointType;
+  }
+
+  *buf = type;
+  return NULL;
+}
+
 char *parseStmt(Lexer *lexer, Stmt *buf) {
   Stmt stmt;
 
-  switch (lexerPeek(lexer).type) {
-    case TT_INT_TYPE:
-    case TT_CHAR_TYPE:
-    case TT_FLOAT_TYPE:
-    case TT_DOUBLE_TYPE:
-    case TT_VOID_TYPE:
-    case TT_IDENT: {
-      Token type = lexerNext(lexer);
-      if (lexerPeek(lexer).type == TT_IDENT) {
-        Token t = lexerNext(lexer);
-        switch (lexerPeek(lexer).type) {
-          case TT_SEMICOLON: {
-            stmt.type = STMT_VARIABLE_DECL;
-            stmt.value.varDecl.type = type;
-            stmt.value.varDecl.name = t.lexeme;
-            stmt.value.varDecl.nameLen = t.lexemeLen;
-            stmt.value.varDecl.value = NULL;
+  Type type;
+  char *err = parseType(lexer, &type);
+  int foundType = err == NULL;
+  if (err) free(err);
+  if (foundType && lexerPeek(lexer).type == TT_IDENT) {
+    Token t = lexerNext(lexer);
+    switch (lexerPeek(lexer).type) {
+      case TT_SEMICOLON: {
+        stmt.type = STMT_VARIABLE_DECL;
+        stmt.value.varDecl.type = type;
+        stmt.value.varDecl.name = t.lexeme;
+        stmt.value.varDecl.nameLen = t.lexemeLen;
+        stmt.value.varDecl.value = NULL;
 
-            break;
-          }
-          case TT_EQ: {
-            stmt.type = STMT_VARIABLE_DECL;
-            stmt.value.varDecl.type = type;
-            stmt.value.varDecl.name = t.lexeme;
-            stmt.value.varDecl.nameLen = t.lexemeLen;
-            lexerNext(lexer);
-
-            Expr value;
-            char *err = parseExpr(lexer, &value, 0);
-            if (err) {
-              stmtFree(stmt);
-              return err;
-            }
-            stmt.value.varDecl.value = malloc(sizeof(Expr));
-            *stmt.value.varDecl.value = value;
-
-            break;
-          }
-          case TT_LPAREN: {
-            stmt.type = STMT_FUNCTION_DECL;
-            stmt.value.funcDecl.name = t.lexeme;
-            stmt.value.funcDecl.nameLen = t.lexemeLen;
-            stmt.value.funcDecl.returnType = type;
-            stmt.value.funcDecl.params = malloc(4 * sizeof(Stmt));
-            stmt.value.funcDecl.paramsCount = 0;
-            stmt.value.funcDecl.paramsCap = 8;
-            lexerNext(lexer);
-
-            while (lexerPeek(lexer).type != TT_RPAREN && lexerPeek(lexer).type != TT_EOF) {
-              Token type = lexerNext(lexer);
-              switch (type.type) {
-                case TT_INT_TYPE:
-                case TT_CHAR_TYPE:
-                case TT_FLOAT_TYPE:
-                case TT_DOUBLE_TYPE:
-                case TT_VOID_TYPE:
-                case TT_IDENT:
-                  break;
-                default: {
-                  stmtFree(stmt);
-                  ERR("Expected type instead found '%s'!", tokenType(&type));
-                }
-              }
-              Token name = lexerNext(lexer);
-              if (name.type != TT_IDENT) {
-                stmtFree(stmt);
-                ERR("Expected 'TT_IDENT' instead found '%s'!", tokenType(&type));
-              }
-
-              if (stmt.value.funcDecl.paramsCap <= stmt.value.funcDecl.paramsCount) {
-                stmt.value.funcDecl.paramsCap *= 2;
-                stmt.value.funcDecl.params = realloc(stmt.value.funcDecl.params, stmt.value.funcDecl.paramsCap * sizeof(Stmt));
-                if (!stmt.value.funcDecl.params) exit(1);
-              }
-              stmt.value.funcDecl.params[stmt.value.funcDecl.paramsCount++] = type;
-              stmt.value.funcDecl.params[stmt.value.funcDecl.paramsCount++] = name;
-
-              if (lexerPeek(lexer).type != TT_COMMA) break;
-              lexerNext(lexer);
-            }
-            if (lexerNext(lexer).type != TT_RPAREN) {
-              stmtFree(stmt);
-              ERR("Expected 'TT_RPAREN' instead found '%s'!", tokenType(&type));
-            }
-
-            break;
-          }
-          default: {
-            stmtFree(stmt);
-            ERR("Expected 'TT_SEMICOLON' or 'TT_EQ' instead found '%s'!", tokenType(&t));
-          }
-        }
+        break;
       }
-      break;
-    }
-    default: {
-      stmt.type = STMT_EXPR;
-      char *err = parseExpr(lexer, &stmt.value.expr, 0);
-      if (err) return err;
+      case TT_EQ: {
+        stmt.type = STMT_VARIABLE_DECL;
+        stmt.value.varDecl.type = type;
+        stmt.value.varDecl.name = t.lexeme;
+        stmt.value.varDecl.nameLen = t.lexemeLen;
+        lexerNext(lexer);
 
-      break;
+        Expr value;
+        char *err = parseExpr(lexer, &value, 0);
+        if (err) {
+          stmtFree(stmt);
+          return err;
+        }
+        stmt.value.varDecl.value = malloc(sizeof(Expr));
+        *stmt.value.varDecl.value = value;
+
+        break;
+      }
+      case TT_LPAREN: {
+        stmt.type = STMT_FUNCTION_DECL;
+        stmt.value.funcDecl.name = t.lexeme;
+        stmt.value.funcDecl.nameLen = t.lexemeLen;
+        stmt.value.funcDecl.returnType = type;
+        stmt.value.funcDecl.paramsType = malloc(4 * sizeof(Type));
+        stmt.value.funcDecl.paramsName = malloc(4 * sizeof(Token));
+        stmt.value.funcDecl.paramsCount = 0;
+        stmt.value.funcDecl.paramsCap = 8;
+        lexerNext(lexer);
+
+        while (lexerPeek(lexer).type != TT_RPAREN && lexerPeek(lexer).type != TT_EOF) {
+          Type type;
+          char *err = parseType(lexer, &type);
+          if (err) {
+            stmtFree(stmt);
+            return err;
+          }
+          Token name = lexerNext(lexer);
+          if (name.type != TT_IDENT) {
+            typeFree(type);
+            stmtFree(stmt);
+            ERR("Expected 'TT_IDENT' instead found '%s'!", tokenType(&name));
+          }
+
+          if (stmt.value.funcDecl.paramsCap <= stmt.value.funcDecl.paramsCount) {
+            stmt.value.funcDecl.paramsCap *= 2;
+            stmt.value.funcDecl.paramsType = realloc(stmt.value.funcDecl.paramsType, stmt.value.funcDecl.paramsCap * sizeof(Type));
+            stmt.value.funcDecl.paramsName = realloc(stmt.value.funcDecl.paramsName, stmt.value.funcDecl.paramsCap * sizeof(Token));
+            if (!stmt.value.funcDecl.paramsType || !stmt.value.funcDecl.paramsName) exit(1);
+          }
+          stmt.value.funcDecl.paramsType[stmt.value.funcDecl.paramsCount] = type;
+          stmt.value.funcDecl.paramsName[stmt.value.funcDecl.paramsCount++] = name;
+
+          if (lexerPeek(lexer).type != TT_COMMA) break;
+          lexerNext(lexer);
+        }
+        Token t = lexerNext(lexer);
+        if (t.type != TT_RPAREN) {
+          typeFree(type);
+          stmtFree(stmt);
+          ERR("Expected 'TT_RPAREN' instead found '%s'!", tokenType(&t));
+        }
+
+        break;
+      }
+      default: {
+        typeFree(type);
+        stmtFree(stmt);
+        ERR("Expected 'TT_SEMICOLON' or 'TT_EQ' instead found '%s'!", tokenType(&t));
+      }
     }
+  } else if (foundType) {
+    typeFree(type);
+  } else {
+    stmt.type = STMT_EXPR;
+    char *err = parseExpr(lexer, &stmt.value.expr, 0);
+    if (err) return err;
   }
 
   Token t = lexerNext(lexer);

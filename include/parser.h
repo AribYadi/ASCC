@@ -16,7 +16,7 @@ typedef enum {
 typedef struct {
   char *str;
   int len;
-} ExprStr;
+} String;
 
 typedef struct {
   enum {
@@ -40,9 +40,9 @@ typedef struct {
 
 typedef union {
   size_t intv;
-  ExprStr str;
+  String str;
   char charv;
-  ExprStr ident;
+  String ident;
   ExprUnary unary;
   ExprBinary binary;
   ExprCall call;
@@ -69,13 +69,36 @@ Expr exprVecPop(ExprVec *exprVec);
 void exprVecFree(ExprVec exprVec);
 
 typedef enum {
+  TYPE_INT,
+  TYPE_CHAR,
+  TYPE_FLOAT,
+  TYPE_DOUBLE,
+  TYPE_VOID,
+  TYPE_IDENT,
+  TYPE_POINTER,
+} TypeType;
+
+typedef union {
+  String ident;
+  void *pointType;
+} TypeValue;
+
+typedef struct {
+  TypeType type;
+  TypeValue value;
+} Type;
+
+void typePrint(Type *type);
+void typeFree(Type type);
+
+typedef enum {
   STMT_EXPR,
   STMT_VARIABLE_DECL,
   STMT_FUNCTION_DECL,
 } StmtType;
 
 typedef struct {
-  Token type;
+  Type type;
   char *name;
   int nameLen;
   Expr *value;
@@ -84,8 +107,9 @@ typedef struct {
 typedef struct {
   char *name;
   int nameLen;
-  Token returnType;
-  Token *params;
+  Type returnType;
+  Type *paramsType;
+  Token *paramsName;
   int paramsCount;
   int paramsCap;
 } StmtFunctionDecl;
