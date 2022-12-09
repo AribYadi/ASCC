@@ -96,6 +96,7 @@ typedef enum {
   STMT_VARIABLE_DECL,
   STMT_FUNCTION_DECL,
   STMT_LABEL,
+  STMT_BLOCK,
 } StmtType;
 
 typedef struct {
@@ -120,6 +121,7 @@ typedef union {
   StmtVariableDecl varDecl;
   StmtFunctionDecl funcDecl;
   Token label;
+  void *block;
 } StmtValue;
 
 typedef struct {

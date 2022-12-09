@@ -216,6 +216,13 @@ void stmtPrint(Stmt *stmt) {
       --indentSize;
       break;
     }
+    case STMT_BLOCK: {
+      ++indentSize;
+      printf("STMT_BLOCK',\n%sstmts: ", indentx);
+      stmtVecPrint((StmtVec *)stmt->value.block);
+      --indentSize;
+      break;
+    }
   }
 
   printf("\n%s}", indent);
@@ -236,6 +243,11 @@ void stmtFree(Stmt stmt) {
       break;
     }
     case STMT_LABEL: break;
+    case STMT_BLOCK: {
+      stmtVecFree(*(StmtVec *)stmt.value.block);
+      free(stmt.value.block);
+      break;
+    }
   }
 }
 
@@ -524,6 +536,31 @@ char *parseType(Lexer *lexer, Type *buf) {
   return NULL;
 }
 
+char *parseStmt(Lexer *lexer, Stmt *buf);
+
+char *parseBlock(Lexer *lexer, StmtVec *buf) {
+  StmtVec stmts = stmtVecNew();
+
+  while (lexerPeek(lexer).type != TT_RBRACE && lexerPeek(lexer).type != TT_EOF) {
+    Stmt stmt;
+    char *err = parseStmt(lexer, &stmt);
+    if (err) {
+      stmtVecFree(stmts);
+      return err;
+    }
+    stmtVecPush(&stmts, stmt);
+  }
+
+  Token t = lexerNext(lexer);
+  if (t.type != TT_RBRACE) {
+    stmtVecFree(stmts);
+    ERR("Expected 'TT_RBRACE' but found '%s'", tokenType(&t));
+  }
+
+  *buf = stmts;
+  return NULL;
+}
+
 char *parseStmt(Lexer *lexer, Stmt *buf) {
   Stmt stmt;
 
@@ -532,9 +569,23 @@ char *parseStmt(Lexer *lexer, Stmt *buf) {
       if (lexerPeekMore(lexer).type == TT_COLON) {
         stmt.type = STMT_LABEL;
         stmt.value.label = lexerNext(lexer);
-        Token t = lexerNext(lexer);
+        lexerNext(lexer);
         goto end;
       }
+      break;
+    }
+    case TT_LBRACE: {
+      lexerNext(lexer);
+      stmt.type = STMT_BLOCK;
+      stmt.value.block = malloc(sizeof(StmtVec));
+
+      char *err = parseBlock(lexer, (StmtVec *)stmt.value.block);
+      if (err) {
+        stmtFree(stmt);
+        return err;
+      }
+
+      goto end;
       break;
     }
     default: break;
