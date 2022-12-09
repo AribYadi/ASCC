@@ -185,27 +185,33 @@ void stmtPrint(Stmt *stmt) {
       --indentSize;
       break;
     }
-    case STMT_FUNCTION_DECL: {
+    case STMT_FUNCTION: {
       ++indentSize;
-      printf("STMT_FUNCTION_DECL',\n%sreturnType: ", indentx);
-      typePrint(&stmt->value.funcDecl.returnType);
-      printf(",\n%sname: '%.*s',\n%sparams: [", indentx, stmt->value.funcDecl.nameLen, stmt->value.funcDecl.name, indentx);
+      printf("STMT_FUNCTION',\n%sreturnType: ", indentx);
+      typePrint(&stmt->value.func.returnType);
+      printf(",\n%sname: '%.*s',\n%sparams: [", indentx, stmt->value.func.nameLen, stmt->value.func.name, indentx);
 
       ++indentSize;
       const char *indentxx = getPrettyIndent();
       ++indentSize;
       const char *indentxxx = getPrettyIndent();
-      for (int i = 0; i < stmt->value.funcDecl.paramsCount; ++i) {
+      for (int i = 0; i < stmt->value.func.paramsCount; ++i) {
         printf("\n%s{", indentxx);
         printf("\n%stype: ", indentxxx);
-        typePrint(stmt->value.funcDecl.paramsType + i);
+        typePrint(stmt->value.func.paramsType + i);
         printf("\n%sname: ", indentxxx);
-        tokenPrint(stmt->value.funcDecl.paramsName + i);
+        tokenPrint(stmt->value.func.paramsName + i);
         printf("\n%s},", indentxx);
       }
       indentSize -= 2;
-      if (stmt->value.funcDecl.paramsCount > 0) printf("\n%s", indentx);
+      if (stmt->value.func.paramsCount > 0) printf("\n%s", indentx);
       printf("]");
+
+      if (stmt->value.func.body) {
+        printf(",\n%sbody: ", indentx);
+        stmtVecPrint((StmtVec *)stmt->value.func.body);
+      }
+
       --indentSize;
       break;
     }
@@ -236,10 +242,14 @@ void stmtFree(Stmt stmt) {
       if (stmt.value.varDecl.value) exprFree(*stmt.value.varDecl.value);
       break;
     }
-    case STMT_FUNCTION_DECL: {
-      for (int i = 0; i < stmt.value.funcDecl.paramsCount; ++i) typeFree(stmt.value.funcDecl.paramsType[i]);
-      free(stmt.value.funcDecl.paramsType);
-      free(stmt.value.funcDecl.paramsName);
+    case STMT_FUNCTION: {
+      for (int i = 0; i < stmt.value.func.paramsCount; ++i) typeFree(stmt.value.func.paramsType[i]);
+      free(stmt.value.func.paramsType);
+      free(stmt.value.func.paramsName);
+      if (stmt.value.func.body) {
+        stmtVecFree(*(StmtVec *)stmt.value.func.body);
+        free(stmt.value.func.body);
+      }
       break;
     }
     case STMT_LABEL: break;
@@ -629,14 +639,14 @@ char *parseStmt(Lexer *lexer, Stmt *buf) {
         break;
       }
       case TT_LPAREN: {
-        stmt.type = STMT_FUNCTION_DECL;
-        stmt.value.funcDecl.name = t.lexeme;
-        stmt.value.funcDecl.nameLen = t.lexemeLen;
-        stmt.value.funcDecl.returnType = type;
-        stmt.value.funcDecl.paramsType = malloc(4 * sizeof(Type));
-        stmt.value.funcDecl.paramsName = malloc(4 * sizeof(Token));
-        stmt.value.funcDecl.paramsCount = 0;
-        stmt.value.funcDecl.paramsCap = 8;
+        stmt.type = STMT_FUNCTION;
+        stmt.value.func.name = t.lexeme;
+        stmt.value.func.nameLen = t.lexemeLen;
+        stmt.value.func.returnType = type;
+        stmt.value.func.paramsType = malloc(4 * sizeof(Type));
+        stmt.value.func.paramsName = malloc(4 * sizeof(Token));
+        stmt.value.func.paramsCount = 0;
+        stmt.value.func.paramsCap = 8;
         lexerNext(lexer);
 
         while (lexerPeek(lexer).type != TT_RPAREN && lexerPeek(lexer).type != TT_EOF) {
@@ -653,14 +663,14 @@ char *parseStmt(Lexer *lexer, Stmt *buf) {
             ERR("Expected 'TT_IDENT' instead found '%s'!", tokenType(&name));
           }
 
-          if (stmt.value.funcDecl.paramsCap <= stmt.value.funcDecl.paramsCount) {
-            stmt.value.funcDecl.paramsCap *= 2;
-            stmt.value.funcDecl.paramsType = realloc(stmt.value.funcDecl.paramsType, stmt.value.funcDecl.paramsCap * sizeof(Type));
-            stmt.value.funcDecl.paramsName = realloc(stmt.value.funcDecl.paramsName, stmt.value.funcDecl.paramsCap * sizeof(Token));
-            if (!stmt.value.funcDecl.paramsType || !stmt.value.funcDecl.paramsName) exit(1);
+          if (stmt.value.func.paramsCap <= stmt.value.func.paramsCount) {
+            stmt.value.func.paramsCap *= 2;
+            stmt.value.func.paramsType = realloc(stmt.value.func.paramsType, stmt.value.func.paramsCap * sizeof(Type));
+            stmt.value.func.paramsName = realloc(stmt.value.func.paramsName, stmt.value.func.paramsCap * sizeof(Token));
+            if (!stmt.value.func.paramsType || !stmt.value.func.paramsName) exit(1);
           }
-          stmt.value.funcDecl.paramsType[stmt.value.funcDecl.paramsCount] = type;
-          stmt.value.funcDecl.paramsName[stmt.value.funcDecl.paramsCount++] = name;
+          stmt.value.func.paramsType[stmt.value.func.paramsCount] = type;
+          stmt.value.func.paramsName[stmt.value.func.paramsCount++] = name;
 
           if (lexerPeek(lexer).type != TT_COMMA) break;
           lexerNext(lexer);
@@ -671,6 +681,18 @@ char *parseStmt(Lexer *lexer, Stmt *buf) {
           stmtFree(stmt);
           ERR("Expected 'TT_RPAREN' instead found '%s'!", tokenType(&t));
         }
+
+        if (lexerPeek(lexer).type == TT_LBRACE) {
+          lexerNext(lexer);
+          stmt.value.func.body = malloc(sizeof(StmtVec));
+          char *err = parseBlock(lexer, (StmtVec *)stmt.value.func.body);
+          if (err) {
+            stmtFree(stmt);
+            return err;
+          }
+          goto end;
+        }
+        stmt.value.func.body = NULL;
 
         break;
       }

@@ -94,7 +94,7 @@ void typeFree(Type type);
 typedef enum {
   STMT_EXPR,
   STMT_VARIABLE_DECL,
-  STMT_FUNCTION_DECL,
+  STMT_FUNCTION,
   STMT_LABEL,
   STMT_BLOCK,
 } StmtType;
@@ -114,12 +114,13 @@ typedef struct {
   Token *paramsName;
   int paramsCount;
   int paramsCap;
-} StmtFunctionDecl;
+  void *body;
+} StmtFunction;
 
 typedef union {
   Expr expr;
   StmtVariableDecl varDecl;
-  StmtFunctionDecl funcDecl;
+  StmtFunction func;
   Token label;
   void *block;
 } StmtValue;
